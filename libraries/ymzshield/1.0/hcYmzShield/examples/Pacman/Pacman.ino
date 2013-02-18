@@ -1,5 +1,5 @@
 /**
- * Hardchord YMZ Shield 1.0 Demo
+ * Pacman Demo (Round Start!)
  * Derrick Sobodash <derrick@sobodash.com>
  * Version 0.1
  *
@@ -13,7 +13,7 @@
  *    and/or other materials provided with the distribution. 
  */
 
-#include "hcYmzShield.h"
+#include <hcYmzShield.h>
 
 hcYmzShield ymzShield;
 
@@ -23,26 +23,11 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("12 shots on an 8-bit machine gun");
-  ymzShield.setVolume(0);
-  demoMachineGun();
-  ymzShield.mute();
-  delay(3000);
-  
-  Serial.println("Going down an 8-bit staricase");
-  demoStaircase();
-  ymzShield.mute();
-  delay(3000);
-    
-  Serial.println("Duck Hunt round start");
-  ymzShield.setVolume(0xd);
-  demoDuckHunt();
-  ymzShield.mute();
-  delay(3000);
-  
   Serial.println("Pacman round start");
   ymzShield.setVolume(0xd);
+  
   demoPacman();
+  
   ymzShield.mute();
   delay(3000);
 }
@@ -53,7 +38,7 @@ void loop() {
  *
  * Tries to minimize some popping.
  */
-void playNote(int note, byte channel) {
+void playNote(uint8_t note, uint8_t channel) {
   if(note == 0) {
     ymzShield.setVolume(channel, 15); delayMicroseconds(25);
     ymzShield.setVolume(channel, 8); delayMicroseconds(25);
@@ -72,42 +57,6 @@ void playNote(int note, byte channel) {
   }
 }
 
-
-/**
- * demoStaircase()
- *
- * Plays a sound like descending a staircase in an 8-bit game.
- */
-void demoStaircase() {
-  ymzShield.setVolume(0xe);
-  ymzShield.setEnvelopePeriod(0xc00);
-  ymzShield.setNoisePeriod(0x4);
-  ymzShield.setNoise(0);
-  ymzShield.setEnvelope(0);
-  ymzShield.startEnvelope(__CONT__ | __ATT__);
-  delay(1700);
-  ymzShield.setNoise(0, false);
-  ymzShield.setEnvelope(0, false);
-  ymzShield.setVolume(0x0);
-}
-
-
-/**
- * demoMachineGun()
- *
- * Plays a sound like an 8-bit gunshot.
- */
-void demoMachineGun() {
-  ymzShield.setEnvelopePeriod(0xfa0);
-  ymzShield.setNoisePeriod(0xf);
-  ymzShield.setNoise(0);
-  ymzShield.setEnvelope(0);
-  for(byte bullets = 0; bullets < 12; bullets++) {
-    ymzShield.startEnvelope(__CONT__); delay(80);
-  }
-  ymzShield.setNoise(0, false);
-  ymzShield.setEnvelope(0, false);
-}
 
 /**
  * demoPacman()
@@ -226,73 +175,3 @@ void demoPacman() {
   playNote(83, 0); playNote(47, 1);
 }
 
-/**
- * demoDuckHunt()
- *
- * Plays the Round Start music from the NES Duck Hunt.
- */
-void demoDuckHunt() {
-  playNote(68, 0); playNote(65, 1);
-  delay(119);
-  playNote(68, 0); playNote(65, 1);
-  delay(6);
-  playNote(68, 0); playNote(65, 1);
-  delay(129);
-  playNote(68, 0); playNote(65, 1);
-  delay(6);
-  playNote(67, 0); playNote(64, 1);
-  delay(258);
-  playNote(67, 0); playNote(64, 1);
-  delay(13);
-  playNote(66, 0); playNote(63, 1);
-  delay(258);
-  playNote(66, 0); playNote(63, 1);
-  delay(13);
-  playNote(65, 0); playNote(62, 1);
-  delay(258);
-  playNote(65, 0); playNote(62, 1);
-  delay(12);
-  playNote(64, 0); playNote(55, 1); playNote(48, 2);
-  delay(388);
-  playNote(64, 0); playNote(55, 1); playNote(48, 2);
-  delay(19);
-  playNote(65, 0); playNote(56, 1); playNote(49, 2);
-  delay(258);
-  playNote(65, 0); playNote(56, 1); playNote(49, 2);
-  delay(558);
-  playNote(77, 0); playNote(68, 1);
-  delay(129);
-  playNote(77, 0); playNote(68, 1);
-  delay(6);
-  playNote(73, 0); playNote(65, 1); playNote(68, 2);
-  delay(128);
-  playNote(73, 0); playNote(65, 1); playNote(68, 2);
-  delay(6);
-  playNote(68, 0); playNote(61, 1); playNote(65, 2);
-  delay(128);
-  playNote(68, 0); playNote(61, 1); playNote(65, 2);
-  delay(6);
-  playNote(68, 0); playNote(60, 1); playNote(63, 2);
-  delay(129);
-  playNote(68, 0); playNote(60, 1); playNote(63, 2);
-  delay(5);
-  playNote(67, 0); playNote(59, 1); playNote(62, 2);
-  delay(129);
-  playNote(67, 0); playNote(59, 1); playNote(62, 2);
-  delay(6);
-  playNote(66, 0); playNote(58, 1); playNote(61, 2);
-  delay(129);
-  playNote(66, 0); playNote(58, 1); playNote(61, 2);
-  delay(5);
-  playNote(65, 0); playNote(56, 1); playNote(60, 2);
-  delay(130);
-  playNote(65, 0); playNote(56, 1); playNote(60, 2);
-  delay(5);
-  playNote(64, 0); playNote(55, 1); playNote(48, 2);
-  delay(388);
-  playNote(64, 0); playNote(55, 1); playNote(48, 2);
-  delay(19);
-  playNote(65, 0); playNote(56, 1); playNote(49, 2);
-  delay(258);
-  playNote(65, 0); playNote(56, 1); playNote(49, 2);
-}

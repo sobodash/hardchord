@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.1
+ * Version 0.2
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -36,91 +36,89 @@ static const uint16_t tpMidi[12] = {
  * These static methods control data exchange with the YMZ284 chips and the 75HC595 serial shifter.
  */
 #ifndef __USE_AVR__
-void hcYmzShield::_shiftOut(byte value) {
-  digitalWrite(3, LOW);
-  shiftOut(2, 4, MSBFIRST, value);
-  digitalWrite(3, HIGH);
+void hcYmzShield::_shiftOut(uint8_t value) {
+  digitalWrite(__PIN_RCK__, LOW);
+  shiftOut(__PIN_SER__, __PIN_SRCK__, MSBFIRST, value);
+  digitalWrite(__PIN_RCK__, HIGH);
 }
 void hcYmzShield::_busAddress() {
-  digitalWrite(11, LOW);
+  digitalWrite(__PIN_SEL__, LOW);
 }
 void hcYmzShield::_busData() {
-  digitalWrite(11, HIGH);
+  digitalWrite(__PIN_SEL__, HIGH);
 }
 void hcYmzShield::_psgWrite() {
-  digitalWrite(12, LOW);
-  digitalWrite(10, LOW);
-  digitalWrite(12, HIGH);
-  digitalWrite(10, HIGH);
+  digitalWrite(__PIN_CS2__, LOW);
+  digitalWrite(__PIN_CS1__, LOW);
+  digitalWrite(__PIN_CS2__, HIGH);
+  digitalWrite(__PIN_CS1__, HIGH);
 }
 void hcYmzShield::_psg0Write() {
-  digitalWrite(12, LOW);
-  digitalWrite(12, HIGH);
+  digitalWrite(__PIN_CS2__, LOW);
+  digitalWrite(__PIN_CS2__, HIGH);
 }
 void hcYmzShield::_psg1Write() {
-  digitalWrite(10, LOW);
-  digitalWrite(10, HIGH);
+  digitalWrite(__PIN_CS1__, LOW);
+  digitalWrite(__PIN_CS1__, HIGH);
 }
 #else
-void hcYmzShield::_shiftOut(byte value) {
-  PORTD &= ~B00001000;
-  for(byte i = 8; i; i--) {
-    PORTD &= ~B00010000; // Clock
-    PORTD &= ~B00000100; // Data
+void hcYmzShield::_shiftOut(uint8_t value) {
+  PORTD &= ~__MASK_RCK__;
+  for(uint8_t i = 8; i; i--) {
+    PORTD &= ~__MASK_SRCK__; // Clock
+    PORTD &= ~__MASK_SER__; // Data
     if(value & 0x80)
-      PORTD |= B00000100; // Data
+      PORTD |= __MASK_SER__; // Data
     value <<= 1;
-    PORTD |= B00010000; // Clock
+    PORTD |= __MASK_SRCK__; // Clock
   }
-  PORTD |= B00001000;
+  PORTD |= __MASK_RCK__;
 }
 void hcYmzShield::_busAddress() {
-  PORTB &= ~B00001000;
+  PORTB &= ~__MASK_SEL__;
 }
 void hcYmzShield::_busData() {
-  PORTB |= B00001000;
+  PORTB |= __MASK_SEL__;
 }
 void hcYmzShield::_psgWrite() {
-  PORTB &= ~B00010000;
-  PORTB &= ~B00000100;
-  PORTB |= B00000100;
-  PORTB |= B00010000;
+  PORTB &= ~B00010100; // __MASK_CS1__ | __MASK_CS2__
+  PORTB |= B00010100; // __MASK_CS1__ | __MASK_CS2__
 }
 void hcYmzShield::_psg0Write() {
-  PORTB &= ~B00010000;
-  PORTB |= B00010000;
+  PORTB &= ~__MASK_CS2__;
+  PORTB |= __MASK_CS2__;
 }
 void hcYmzShield::_psg1Write() {
-  PORTB &= ~B00000100;
-  PORTB |= B00000100;
+  PORTB &= ~__MASK_CS1__;
+  PORTB |= __MASK_CS1__;
 }
 #endif __USE_AVR__
 
 
 /**
- * public hcYmzShield
+ * public hcYmzShield()
  *
  * Initializes the shield as an object.
  */
 hcYmzShield::hcYmzShield() {
   #ifndef __USE_AVR__
-  pinMode(2,  OUTPUT);
-  pinMode(3,  OUTPUT);
-  pinMode(4,  OUTPUT);
-  pinMode(10, OUTPUT);
-  pinMode(11, OUTPUT);
-  pinMode(12, OUTPUT);
+  pinMode(__PIN_SER__,  OUTPUT);
+  pinMode(__PIN_RCK__,  OUTPUT);
+  pinMode(__PIN_SRCK__, OUTPUT);
+  pinMode(__PIN_CS1__,  OUTPUT);
+  pinMode(__PIN_SEL__,  OUTPUT);
+  pinMode(__PIN_CS2__,  OUTPUT);
   
   // Disable writing until we actually want to do it
-  digitalWrite(10, HIGH);
-  digitalWrite(12, HIGH);
+  digitalWrite(__PIN_CS1__, HIGH);
+  digitalWrite(__PIN_CS2__, HIGH);
   #else
-  DDRB |= B00011100;
-  DDRD |= B00011100;
-  PORTB |= B00010100;
+  DDRB  |= B00011100; // __MASK_CS1__ | __MASK_SEL__ | __MASK_CS2__
+  DDRD  |= B00011100; // __MASK_SER__ | __MASK_RCK__ | __MASK_SRCK__
+  PORTB |= B00010100; // __MASK_CS1__ | __MASK_CS2__
   #endif __USE_AVR__
   
-  // Initialize all registers to 0
+  // Initialize register backup to 0
   memset(this->_psg0Registers, 0, 0x0d);
   memset(this->_psg1Registers, 0, 0x0d);
   
@@ -134,18 +132,17 @@ hcYmzShield::hcYmzShield() {
  * 
  * Returns whether a channel is on PSG0 (B00000001) or PSG1 (B00000010).
  */
-byte hcYmzShield::_psgDetect(byte channel) {
+uint8_t hcYmzShield::_psgDetect(uint8_t channel) {
   return((channel > 2) ? 2 : 1);
 }
 
 
 /**
- * private hcYmzShield::_setByte()
+ * private hcYmzShield::_setRegister()
  * 
  * Set a byte in the YMZ284's internal registers.
  */
-void hcYmzShield::_setByte(byte reg, byte data, byte psg) {
-  
+void hcYmzShield::_setRegister(uint8_t reg, uint8_t data, uint8_t psg) {
   // Switch the bus to recieve a register address and shift it out
   this->_busAddress();
   this->_shiftOut(reg);
@@ -175,15 +172,15 @@ void hcYmzShield::_setByte(byte reg, byte data, byte psg) {
  * 
  * Hz = (4 * 10^6) / (32 * TP)
  */
-void hcYmzShield::setTonePeriod(byte channel, uint16_t tp) {
+void hcYmzShield::setTonePeriod(uint8_t channel, uint16_t tp) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
-  tp &= 0x0fff; // Sanitize
+  tp &= 0x0fff; // Sanitize to 12-bit
   
-  this->_setByte((channel *= 2), (tp & 0xff), psg);
-  this->_setByte((++channel), (tp >> 8), psg);
+  this->_setRegister((channel *= 2), (tp & 0xff), psg);
+  this->_setRegister((++channel), (tp >> 8), psg);
 }
 
 
@@ -192,9 +189,9 @@ void hcYmzShield::setTonePeriod(byte channel, uint16_t tp) {
  * 
  * Returns the current tone period of a channel.
  */
-uint16_t hcYmzShield::getTonePeriod(byte channel) {
+uint16_t hcYmzShield::getTonePeriod(uint8_t channel) {
   // Get Channels 3-5 from PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= (channel > 2 ? 3 : 0);
   uint16_t tp;
   
@@ -206,7 +203,7 @@ uint16_t hcYmzShield::getTonePeriod(byte channel) {
     tp =  (this->_psg0Registers[(channel *=2)]);
     tp += (this->_psg0Registers[(++channel)] << 8);
   }
-    
+  
   return(tp);
 }
 
@@ -216,15 +213,15 @@ uint16_t hcYmzShield::getTonePeriod(byte channel) {
  * 
  * Sets the tone period of a channel to produce a given frequency in Hz.
  */
-void hcYmzShield::setToneFrequency(byte channel, float hz) {
+void hcYmzShield::setToneFrequency(uint8_t channel, float hz) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   uint16_t tp = 125000 / hz;
   
-  this->_setByte((channel *= 2), (tp & 0xff), psg);
-  this->_setByte((++channel), (tp >> 8), psg);
+  this->_setRegister((channel *= 2), (tp & 0xff), psg);
+  this->_setRegister((++channel), (tp >> 8), psg);
 }
 
 
@@ -233,15 +230,15 @@ void hcYmzShield::setToneFrequency(byte channel, float hz) {
  * 
  * Sets the tone period of a channel to produce the given MIDI note.
  */
-void hcYmzShield::setToneMidi(byte channel, uint16_t note) {
+void hcYmzShield::setToneMidi(uint8_t channel, uint16_t note) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
 
   uint16_t tp = ((note > 12) ? (tpMidi[note%12] >> (note/12)) : tpMidi[note]);
   
-  this->_setByte((channel *= 2), (tp & 0xff), psg);
-  this->_setByte((++channel), (tp >> 8), psg);
+  this->_setRegister((channel *= 2), (tp & 0xff), psg);
+  this->_setRegister((++channel), (tp >> 8), psg);
 }
 
 
@@ -253,8 +250,8 @@ void hcYmzShield::setToneMidi(byte channel, uint16_t note) {
  * 
  * Hz = (4 * 10^6) / (32 * NP)
  */
-void hcYmzShield::setNoisePeriod(byte np) {
-  this->_setByte(0x06, (np & B00011111), 3); // Sanitize and write
+void hcYmzShield::setNoisePeriod(uint8_t np) {
+  this->_setRegister(0x06, (np & B00011111), 3); // Sanitize and write
 }
 
 
@@ -263,7 +260,7 @@ void hcYmzShield::setNoisePeriod(byte np) {
  * 
  * Returns the current noise period of the shield.
  */
-byte hcYmzShield::getNoisePeriod() {
+uint8_t hcYmzShield::getNoisePeriod() {
   return(this->_psg0Registers[0x06]);
 }
 
@@ -276,7 +273,7 @@ byte hcYmzShield::getNoisePeriod() {
 void hcYmzShield::setNoiseFrequency(float hz) {
   uint16_t np = 125000 / hz;
   
-  this->_setByte(0x06, (np & B00011111), 3); // Sanitize and write
+  this->_setRegister(0x06, (np & B00011111), 3); // Sanitize and write
 }
 
 
@@ -289,9 +286,9 @@ void hcYmzShield::setNoiseFrequency(float hz) {
  * Hz = (4 * 10^6) / (256 * EP)
  */
 void hcYmzShield::setEnvelopePeriod(uint16_t ep) {
-  ep &= 0xffff;
-  _setByte(0x0b, ep & 0xff, 3);
-  _setByte(0x0c, ep >> 8, 3);
+  ep &= 0xffff; // May be unnecessary
+  this->_setRegister(0x0b, ep & 0xff, 3);
+  this->_setRegister(0x0c, ep >> 8, 3);
 }
 
 
@@ -313,8 +310,8 @@ uint16_t hcYmzShield::getEnvelopePeriod() {
 void hcYmzShield::setEnvelopeFrequency(float hz) {
   uint16_t ep = 7812.5 / hz;
   
-  _setByte(0x0b, ep & 0xff, 3);
-  _setByte(0x0c, ep >> 8, 3);
+  this->_setRegister(0x0b, ep & 0xff, 3);
+  this->_setRegister(0x0c, ep >> 8, 3);
 }
 
 
@@ -324,9 +321,9 @@ void hcYmzShield::setEnvelopeFrequency(float hz) {
  * Sets the shape of the noise envelope. Only the lower 4 bits of the
  * register are used. The bits correspond toggle CONTINUE, ATTACK, ALTERNATE and HOLD.
  */
-void hcYmzShield::startEnvelope(byte shape) {
+void hcYmzShield::startEnvelope(uint8_t shape) {
   shape &= 0xf;
-  _setByte(0x0d, shape, 3);
+  this->_setRegister(0x0d, shape, 3);
 }
 
 
@@ -345,19 +342,19 @@ void hcYmzShield::restartEnvelope() {
  * 
  * Enables or disables tone output on a channel.
  */
-void hcYmzShield::setTone(byte channel, boolean isEnabled) {
+void hcYmzShield::setTone(uint8_t channel, boolean isEnabled) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  byte data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
   
-  byte mask = (1 << channel);
+  uint8_t mask = (1 << channel);
   
   isEnabled ? data &= ~mask : data |= mask;
   
-  this->_setByte(0x07, (data & 0x3f), psg);
+  this->_setRegister(0x07, (data & 0x3f), psg);
 }
 
 
@@ -366,13 +363,13 @@ void hcYmzShield::setTone(byte channel, boolean isEnabled) {
  * 
  * Returns boolean true if the current channel is being used for tone output.
  */
-boolean hcYmzShield::isTone(byte channel) {
+boolean hcYmzShield::isTone(uint8_t channel) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  byte data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
   
   return(((data & (1 << channel)) == 0) ? true : false);
 }
@@ -382,19 +379,19 @@ boolean hcYmzShield::isTone(byte channel) {
  * 
  * Enables or disables noise output on a channel.
  */
-void hcYmzShield::setNoise(byte channel, boolean isEnabled) {
+void hcYmzShield::setNoise(uint8_t channel, boolean isEnabled) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  byte data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
   
-  byte mask = (1 << (channel + 3));
+  uint8_t mask = (1 << (channel + 3));
   
   isEnabled ? data &= ~mask : data |= mask;
   
-  this->_setByte(0x07, (data & 0x3f), psg);
+  this->_setRegister(0x07, (data & 0x3f), psg);
 }
 
 
@@ -403,13 +400,13 @@ void hcYmzShield::setNoise(byte channel, boolean isEnabled) {
  * 
  * Returns boolean true if the current channel is being used for noise output.
  */
-boolean hcYmzShield::isNoise(byte channel) {
+boolean hcYmzShield::isNoise(uint8_t channel) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  byte data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
   
   return(((data & (1 << (channel * 3))) == 0) ? true : false);
 }
@@ -421,7 +418,7 @@ boolean hcYmzShield::isNoise(byte channel) {
  * Toggle sound channels off.
  */
 void hcYmzShield::mute() {
-  _setByte(0x07, B00111111, 3);
+  this->_setRegister(0x07, B00111111, 3);
 }
 
 
@@ -430,19 +427,19 @@ void hcYmzShield::mute() {
  * 
  * Adjust the value of each channel.
  */
-void hcYmzShield::setVolume(byte channel, byte volume) {
+void hcYmzShield::setVolume(uint8_t channel, uint8_t volume) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   volume &= 0xf;
   
   // Pick up the noise bit
-  byte data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]) & 0x10;
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]) & 0x10;
   
-  _setByte(0x08 + channel, volume + data, psg);
+  this->_setRegister(0x08 + channel, volume + data, psg);
 }
-byte hcYmzShield::getVolume(byte channel) {
+byte hcYmzShield::getVolume(uint8_t channel) {
   return(this->_psg0Registers[(0x08 + channel) & 0xf]);
 }
 
@@ -452,9 +449,9 @@ byte hcYmzShield::getVolume(byte channel) {
  * 
  * Adjust the value of all channels.
  */
-void hcYmzShield::setVolume(byte volume) {
+void hcYmzShield::setVolume(uint8_t volume) {
   volume &= 0xf;
-  for(byte i = 0; i < 6; i++)
+  for(uint8_t i = 0; i < 6; i++)
     this->setVolume(i, volume);
 }
 
@@ -464,19 +461,19 @@ void hcYmzShield::setVolume(byte volume) {
  * 
  * Enables or disables mixing a channel through the envelope generator.
  */
-void hcYmzShield::setEnvelope(byte channel, boolean isEnabled) {
+void hcYmzShield::setEnvelope(uint8_t channel, boolean isEnabled) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  byte data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]);
   
-  byte mask = 0x10;
+  uint8_t mask = 0x10;
   
   isEnabled ? data |= mask : data &= ~mask;
   
-  this->_setByte(0x08, (data & 0x1f), psg);
+  this->_setRegister(0x08, (data & 0x1f), psg);
 }
 
 
@@ -485,13 +482,13 @@ void hcYmzShield::setEnvelope(byte channel, boolean isEnabled) {
  * 
  * Returns boolean true if the current channel is being used for noise output.
  */
-boolean hcYmzShield::isEnvelope(byte channel) {
+boolean hcYmzShield::isEnvelope(uint8_t channel) {
   // Direct Channels 3-5 to PSG1
-  byte psg = this->_psgDetect(channel);
+  uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  byte data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]);
   
   return(((data & 0x10) == 1) ? true : false);
 }
