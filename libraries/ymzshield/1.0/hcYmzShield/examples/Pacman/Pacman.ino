@@ -1,7 +1,7 @@
 /**
  * Pacman Demo (Round Start!)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.1
+ * Version 0.2
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -38,9 +38,8 @@ void loop() {
  *
  * Tries to minimize some popping.
  */
-void playNote(uint8_t note, uint8_t channel) {
+void playNote(uint8_t channel, uint8_t note) {
   if(note == 0) {
-    ymzShield.setVolume(channel, 15); delayMicroseconds(25);
     ymzShield.setVolume(channel, 8); delayMicroseconds(25);
     ymzShield.setTone(channel, false);
     ymzShield.setVolume(channel, 0);
@@ -50,7 +49,6 @@ void playNote(uint8_t note, uint8_t channel) {
   ymzShield.setToneMidi(channel, note);
   
   if(ymzShield.isTone(channel) == false) {
-    ymzShield.setVolume(channel, 0);
     ymzShield.setTone(channel);
     ymzShield.setVolume(channel, 8); delayMicroseconds(25);
     ymzShield.setVolume(channel, 15); delayMicroseconds(25);
@@ -64,114 +62,114 @@ void playNote(uint8_t note, uint8_t channel) {
  * Plays the Round Start music from the original Pacman.
  */
 void demoPacman() {
-  playNote(71, 0); playNote(35, 1);
+  playNote(0, 71); playNote(1, 35);
   delay(1);
-  playNote(71, 0); playNote(83, 0); playNote(35, 1);
+  playNote(0, 83); playNote(1, 35);
   delay(69);
-  playNote(83, 0);
+  playNote(0, 83);
   delay(70);
-  playNote(78, 0);
+  playNote(0, 78);
   delay(71);
-  playNote(78, 0);
+  playNote(0, 78);
   delay(70);
-  playNote(75, 0); playNote(47, 1);
+  playNote(0, 75); playNote(1, 47);
   delay(70);
-  playNote(75, 0);
+  playNote(0, 75);
   delay(70);
-  playNote(83, 0); playNote(47, 1); playNote(35, 1);
+  playNote(0, 83); playNote(1, 35);
   delay(70);
-  playNote(83, 0); playNote(78, 0);
+  playNote(0, 78);
   delay(69);
-  playNote(78, 0); playNote(35, 1);
+  playNote(0, 78); playNote(1, 35);
   delay(141);
-  playNote(75, 0);
+  playNote(0, 75);
   delay(140);
-  playNote(47, 1);
+  playNote(1, 47);
   delay(71);
-  playNote(75, 0);
+  playNote(0, 75);
   delay(70);
-  playNote(72, 0); playNote(47, 1); playNote(36, 1);
+  playNote(0, 72); playNote(1, 36);
   delay(70);
-  playNote(72, 0);
+  playNote(0, 72);
   delay(71);
-  playNote(84, 0); playNote(36, 1);
+  playNote(0, 84); playNote(1, 36);
   delay(69);
-  playNote(84, 0);
+  playNote(0, 84);
   delay(70);
-  playNote(79, 0);
+  playNote(0, 79);
   delay(70);
-  playNote(79, 0);
+  playNote(0, 79);
   delay(71);
-  playNote(76, 0); playNote(48, 1);
+  playNote(0, 76); playNote(1, 48);
   delay(69);
-  playNote(76, 0);
+  playNote(0, 76);
   delay(70);
-  playNote(84, 0); playNote(48, 1); playNote(36, 1);
+  playNote(0, 84); playNote(1, 36);
   delay(70);
-  playNote(84, 0); playNote(79, 0);
+  playNote(0, 79);
   delay(70);
-  playNote(79, 0); playNote(36, 1);
+  playNote(0, 79); playNote(1, 36);
   delay(140);
-  playNote(76, 0);
+  playNote(0, 76);
   delay(141);
-  playNote(48, 1);
+  playNote(1, 48);
   delay(69);
-  playNote(76, 0);
+  playNote(0, 76);
   delay(70);
-  playNote(71, 0); playNote(48, 1); playNote(35, 1);
+  playNote(0, 71); playNote(1, 35);
   delay(70);
-  playNote(71, 0);
+  playNote(0, 71);
   delay(70);
-  playNote(83, 0); playNote(35, 1);
+  playNote(0, 83); playNote(1, 35);
   delay(69);
-  playNote(83, 0);
+  playNote(0, 83);
   delay(70);
-  playNote(78, 0);
+  playNote(0, 78);
   delay(70);
-  playNote(78, 0);
+  playNote(0, 78);
   delay(71);
-  playNote(75, 0); playNote(47, 1);
+  playNote(0, 75); playNote(1, 47);
   delay(69);
-  playNote(75, 0);
+  playNote(0, 75);
   delay(70);
-  playNote(83, 0); playNote(47, 1); playNote(35, 1);
+  playNote(0, 83); playNote(1, 35);
   delay(70);
-  playNote(83, 0); playNote(78, 0);
+  playNote(0, 78);
   delay(70);
-  playNote(78, 0); playNote(35, 1);
+  playNote(0, 78); playNote(1, 35);
   delay(140);
-  playNote(75, 0);
+  playNote(0, 75);
   delay(141);
-  playNote(47, 1);
+  playNote(1, 47);
   delay(69);
-  playNote(75, 0);
+  playNote(0, 75);
   delay(71);
-  playNote(75, 0); playNote(47, 1); playNote(42, 1);
+  playNote(0, 75); playNote(1, 42);
   delay(70);
-  playNote(75, 0); playNote(76, 0);
+  playNote(0, 76);
   delay(70);
-  playNote(76, 0); playNote(77, 0); playNote(42, 1);
+  playNote(0, 77); playNote(1, 42);
   delay(69);
-  playNote(77, 0);
+  playNote(0, 77);
   delay(70);
-  playNote(77, 0); playNote(44, 1);
+  playNote(0, 77); playNote(1, 44);
   delay(70);
-  playNote(77, 0); playNote(78, 0);
+  playNote(0, 78);
   delay(70);
-  playNote(78, 0); playNote(79, 0); playNote(44, 1);
+  playNote(0, 79); playNote(1, 44);
   delay(69);
-  playNote(79, 0);
+  playNote(0, 79);
   delay(70);
-  playNote(79, 0); playNote(46, 1);
+  playNote(0, 79); playNote(1, 46);
   delay(70);
-  playNote(79, 0); playNote(80, 0);
+  playNote(0, 80);
   delay(70);
-  playNote(80, 0); playNote(81, 0); playNote(46, 1);
+  playNote(0, 81); playNote(1, 46);
   delay(69);
-  playNote(81, 0);
+  playNote(0, 81);
   delay(70);
-  playNote(83, 0); playNote(47, 1);
+  playNote(0, 83); playNote(1, 47);
   delay(141);
-  playNote(83, 0); playNote(47, 1);
+  playNote(0, 83); playNote(1, 47);
 }
 

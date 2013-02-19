@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.h)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2
+ * Version 0.2.1
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:

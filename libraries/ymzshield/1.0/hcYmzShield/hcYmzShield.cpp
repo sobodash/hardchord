@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2
+ * Version 0.2.1
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -374,6 +374,7 @@ boolean hcYmzShield::isTone(uint8_t channel) {
   return(((data & (1 << channel)) == 0) ? true : false);
 }
 
+
 /**
  * public hcYmzShield:setNoise()
  * 
@@ -439,8 +440,19 @@ void hcYmzShield::setVolume(uint8_t channel, uint8_t volume) {
   
   this->_setRegister(0x08 + channel, volume + data, psg);
 }
+
+
+/**
+ * public hcYmzShield:getVolume()
+ * 
+ * Returns the volume of a channel.
+ */
 byte hcYmzShield::getVolume(uint8_t channel) {
-  return(this->_psg0Registers[(0x08 + channel) & 0xf]);
+  // Direct Channels 3-5 to PSG1
+  uint8_t psg = this->_psgDetect(channel);
+  channel -= ((channel > 2) ? 3 : 0);
+
+  return(((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]) & 0xf);
 }
 
 
