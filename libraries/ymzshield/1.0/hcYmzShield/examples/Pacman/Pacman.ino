@@ -1,7 +1,7 @@
 /**
  * Pacman Demo (Round Start!)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2
+ * Version 0.3
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,35 +23,10 @@ void setup() {
 
 void loop() {
   Serial.println("Pacman round start");
-  PSG.setVolume(0xd);
   
   demoPacman();
   
-  PSG.mute();
   delay(3000);
-}
-
-
-/**
- * playNote()
- *
- * Tries to minimize some popping.
- */
-void playNote(uint8_t channel, uint8_t note) {
-  if(note == 0) {
-    PSG.setVolume(channel, 8); delayMicroseconds(25);
-    PSG.setTone(channel, false);
-    PSG.setVolume(channel, 0);
-    return;
-  }
-  
-  PSG.setToneMidi(channel, note);
-  
-  if(PSG.isTone(channel) == false) {
-    PSG.setTone(channel);
-    PSG.setVolume(channel, 8); delayMicroseconds(25);
-    PSG.setVolume(channel, 15); delayMicroseconds(25);
-  }
 }
 
 
@@ -61,114 +36,117 @@ void playNote(uint8_t channel, uint8_t note) {
  * Plays the Round Start music from the original Pacman.
  */
 void demoPacman() {
-  playNote(0, 71); playNote(1, 35);
+  PSG.setVolume(13);
+  
+  PSG.setNote(0, 71); PSG.setNote(1, 35);
   delay(1);
-  playNote(0, 83); playNote(1, 35);
+  PSG.setNote(0, 83); PSG.setNote(1, 35);
   delay(69);
-  playNote(0, 83);
+  PSG.setNote(0, 83);
   delay(70);
-  playNote(0, 78);
+  PSG.setNote(0, 78);
   delay(71);
-  playNote(0, 78);
+  PSG.setNote(0, 78);
   delay(70);
-  playNote(0, 75); playNote(1, 47);
+  PSG.setNote(0, 75); PSG.setNote(1, 47);
   delay(70);
-  playNote(0, 75);
+  PSG.setNote(0, 75);
   delay(70);
-  playNote(0, 83); playNote(1, 35);
+  PSG.setNote(0, 83); PSG.setNote(1, 35);
   delay(70);
-  playNote(0, 78);
+  PSG.setNote(0, 78);
   delay(69);
-  playNote(0, 78); playNote(1, 35);
+  PSG.setNote(0, 78); PSG.setNote(1, 35);
   delay(141);
-  playNote(0, 75);
+  PSG.setNote(0, 75);
   delay(140);
-  playNote(1, 47);
+  PSG.setNote(1, 47);
   delay(71);
-  playNote(0, 75);
+  PSG.setNote(0, 75);
   delay(70);
-  playNote(0, 72); playNote(1, 36);
+  PSG.setNote(0, 72); PSG.setNote(1, 36);
   delay(70);
-  playNote(0, 72);
+  PSG.setNote(0, 72);
   delay(71);
-  playNote(0, 84); playNote(1, 36);
+  PSG.setNote(0, 84); PSG.setNote(1, 36);
   delay(69);
-  playNote(0, 84);
+  PSG.setNote(0, 84);
   delay(70);
-  playNote(0, 79);
+  PSG.setNote(0, 79);
   delay(70);
-  playNote(0, 79);
+  PSG.setNote(0, 79);
   delay(71);
-  playNote(0, 76); playNote(1, 48);
+  PSG.setNote(0, 76); PSG.setNote(1, 48);
   delay(69);
-  playNote(0, 76);
+  PSG.setNote(0, 76);
   delay(70);
-  playNote(0, 84); playNote(1, 36);
+  PSG.setNote(0, 84); PSG.setNote(1, 36);
   delay(70);
-  playNote(0, 79);
+  PSG.setNote(0, 79);
   delay(70);
-  playNote(0, 79); playNote(1, 36);
+  PSG.setNote(0, 79); PSG.setNote(1, 36);
   delay(140);
-  playNote(0, 76);
+  PSG.setNote(0, 76);
   delay(141);
-  playNote(1, 48);
+  PSG.setNote(1, 48);
   delay(69);
-  playNote(0, 76);
+  PSG.setNote(0, 76);
   delay(70);
-  playNote(0, 71); playNote(1, 35);
+  PSG.setNote(0, 71); PSG.setNote(1, 35);
   delay(70);
-  playNote(0, 71);
+  PSG.setNote(0, 71);
   delay(70);
-  playNote(0, 83); playNote(1, 35);
+  PSG.setNote(0, 83); PSG.setNote(1, 35);
   delay(69);
-  playNote(0, 83);
+  PSG.setNote(0, 83);
   delay(70);
-  playNote(0, 78);
+  PSG.setNote(0, 78);
   delay(70);
-  playNote(0, 78);
+  PSG.setNote(0, 78);
   delay(71);
-  playNote(0, 75); playNote(1, 47);
+  PSG.setNote(0, 75); PSG.setNote(1, 47);
   delay(69);
-  playNote(0, 75);
+  PSG.setNote(0, 75);
   delay(70);
-  playNote(0, 83); playNote(1, 35);
+  PSG.setNote(0, 83); PSG.setNote(1, 35);
   delay(70);
-  playNote(0, 78);
+  PSG.setNote(0, 78);
   delay(70);
-  playNote(0, 78); playNote(1, 35);
+  PSG.setNote(0, 78); PSG.setNote(1, 35);
   delay(140);
-  playNote(0, 75);
+  PSG.setNote(0, 75);
   delay(141);
-  playNote(1, 47);
+  PSG.setNote(1, 47);
   delay(69);
-  playNote(0, 75);
+  PSG.setNote(0, 75);
   delay(71);
-  playNote(0, 75); playNote(1, 42);
+  PSG.setNote(0, 75); PSG.setNote(1, 42);
   delay(70);
-  playNote(0, 76);
+  PSG.setNote(0, 76);
   delay(70);
-  playNote(0, 77); playNote(1, 42);
+  PSG.setNote(0, 77); PSG.setNote(1, 42);
   delay(69);
-  playNote(0, 77);
+  PSG.setNote(0, 77);
   delay(70);
-  playNote(0, 77); playNote(1, 44);
+  PSG.setNote(0, 77); PSG.setNote(1, 44);
   delay(70);
-  playNote(0, 78);
+  PSG.setNote(0, 78);
   delay(70);
-  playNote(0, 79); playNote(1, 44);
+  PSG.setNote(0, 79); PSG.setNote(1, 44);
   delay(69);
-  playNote(0, 79);
+  PSG.setNote(0, 79);
   delay(70);
-  playNote(0, 79); playNote(1, 46);
+  PSG.setNote(0, 79); PSG.setNote(1, 46);
   delay(70);
-  playNote(0, 80);
+  PSG.setNote(0, 80);
   delay(70);
-  playNote(0, 81); playNote(1, 46);
+  PSG.setNote(0, 81); PSG.setNote(1, 46);
   delay(69);
-  playNote(0, 81);
+  PSG.setNote(0, 81);
   delay(70);
-  playNote(0, 83); playNote(1, 47);
+  PSG.setNote(0, 83); PSG.setNote(1, 47);
   delay(141);
-  playNote(0, 83); playNote(1, 47);
+  
+  PSG.mute();
 }
 

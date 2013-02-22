@@ -1,7 +1,7 @@
 /**
- * Duck Hunt Demo (Round Start!)
+ * Duck Hunt Demo (Title Screen)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2.1
+ * Version 0.3
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,36 +22,11 @@ void setup() {
 
 
 void loop() {
-  Serial.println("Duck Hunt round start");
-  PSG.setVolume(0xd);
+  Serial.println("Duck Hunt title screen");
   
   demoDuckHunt();
   
-  PSG.mute();
   delay(3000);
-}
-
-
-/**
- * playNote()
- *
- * Tries to minimize some popping.
- */
-void playNote(uint8_t channel, uint8_t note) {
-  if(note == 0) {
-    PSG.setVolume(channel, 8); delayMicroseconds(25);
-    PSG.setTone(channel, false);
-    PSG.setVolume(channel, 0);
-    return;
-  }
-  
-  PSG.setToneMidi(channel, note);
-  
-  if(PSG.isTone(channel) == false) {
-    PSG.setTone(channel);
-    PSG.setVolume(channel, 8); delayMicroseconds(25);
-    PSG.setVolume(channel, 15); delayMicroseconds(25);
-  }
 }
 
 
@@ -61,68 +36,49 @@ void playNote(uint8_t channel, uint8_t note) {
  * Plays the Round Start music from the NES Duck Hunt.
  */
 void demoDuckHunt() {
-  playNote(0, 68); playNote(1, 65);
-  delay(119);
-  playNote(0, 68); playNote(1, 65);
-  delay(6);
-  playNote(0, 68); playNote(1, 65);
-  delay(129);
-  playNote(0, 68); playNote(1, 65);
-  delay(6);
-  playNote(0, 67); playNote(1, 64);
-  delay(258);
-  playNote(0, 67); playNote(1, 64);
-  delay(13);
-  playNote(0, 66); playNote(1, 63);
-  delay(258);
-  playNote(0, 66); playNote(1, 63);
-  delay(13);
-  playNote(0, 65); playNote(1, 62);
-  delay(258);
-  playNote(0, 65); playNote(1, 62);
-  delay(12);
-  playNote(0, 64); playNote(1, 55); playNote(2, 48);
-  delay(388);
-  playNote(0, 64); playNote(1, 55); playNote(2, 48);
-  delay(19);
-  playNote(0, 65); playNote(1, 56); playNote(2, 49);
-  delay(258);
-  playNote(0, 65); playNote(1, 56); playNote(2, 49);
-  delay(558);
-  playNote(0, 77); playNote(1, 68);
-  delay(129);
-  playNote(0, 77); playNote(1, 68);
-  delay(6);
-  playNote(0, 73); playNote(1, 65); playNote(2, 68);
-  delay(128);
-  playNote(0, 73); playNote(1, 65); playNote(2, 68);
-  delay(6);
-  playNote(0, 68); playNote(1, 61); playNote(2, 65);
-  delay(128);
-  playNote(0, 68); playNote(1, 61); playNote(2, 65);
-  delay(6);
-  playNote(0, 68); playNote(1, 60); playNote(2, 63);
-  delay(129);
-  playNote(0, 68); playNote(1, 60); playNote(2, 63);
-  delay(5);
-  playNote(0, 67); playNote(1, 59); playNote(2, 62);
-  delay(129);
-  playNote(0, 67); playNote(1, 59); playNote(2, 62);
-  delay(6);
-  playNote(0, 66); playNote(1, 58); playNote(2, 61);
-  delay(129);
-  playNote(0, 66); playNote(1, 58); playNote(2, 61);
-  delay(5);
-  playNote(0, 65); playNote(1, 56); playNote(2, 60);
-  delay(130);
-  playNote(0, 65); playNote(1, 56); playNote(2, 60);
-  delay(5);
-  playNote(0, 64); playNote(1, 55); playNote(2, 48);
-  delay(388);
-  playNote(0, 64); playNote(1, 55); playNote(2, 48);
-  delay(19);
-  playNote(0, 65); playNote(1, 56); playNote(2, 49);
-  delay(258);
-  playNote(0, 65); playNote(1, 56); playNote(2, 49);
+  PSG.setVolume(13);
+  PSG.setTempo(110);
+  
+  // Key of Ab Minor
+  
+  PSG.setChannels(68, 65);
+  PSG.beat(16);
+  PSG.setChannels(68, 65);
+  PSG.beat(16);
+  PSG.setChannels(67, 64);
+  PSG.beat(8);
+  PSG.setChannels(66, 63);
+  PSG.beat(8);
+  PSG.setChannels(65, 62);
+  PSG.beat(8);
+  PSG.setChannels(64, 55, 48);
+  PSG.beat(8, DOT);
+  PSG.setChannels(65, 56, 49);
+  PSG.beat(8);
+  PSG.setChannels(OFF, OFF, OFF);
+  PSG.beat(8, DOT); // Rest
+  
+  PSG.setChannels(77, 68);
+  PSG.beat(16);
+  PSG.setChannels(73, 65, 68);
+  PSG.beat(16);
+  PSG.setChannels(68, 61, 65);
+  PSG.beat(16);
+  PSG.setChannels(68, 60, 63);
+  PSG.beat(16);
+  PSG.setChannels(67, 59, 62);
+  PSG.beat(16);
+  PSG.setChannels(66, 58, 61);
+  PSG.beat(16);
+  PSG.setChannels(65, 56, 60);
+  PSG.beat(16);
+  PSG.setChannels(64, 55, 48);
+  PSG.beat(8, DOT);
+  PSG.setChannels(65, 56, 49);
+  PSG.beat(8);
+  PSG.setChannels(OFF, OFF, OFF);
+  PSG.beat(8, DOT); // Rest
+  
+  PSG.mute();
 }
 

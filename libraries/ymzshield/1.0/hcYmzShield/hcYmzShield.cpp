@@ -6,8 +6,8 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer. 
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution. 
@@ -180,6 +180,7 @@ void hcYmzShield::_setRegister(uint8_t reg, uint8_t data, uint8_t psg) {
   // Switch the bus to recieve a register address and shift it out
   this->_busAddress();
   this->_shiftOut(reg);
+  
   if(psg == 1) this->_psg0Write();
   else if(psg == 2) this->_psg1Write();
   else this->_psgWrite();
@@ -187,6 +188,7 @@ void hcYmzShield::_setRegister(uint8_t reg, uint8_t data, uint8_t psg) {
   // Switch the bus to recieve data and shift it out
   this->_busData();
   this->_shiftOut(data);
+  
   if(psg == 1) this->_psg0Write();
   else if(psg == 2) this->_psg1Write();
   else this->_psgWrite();
@@ -375,13 +377,14 @@ void hcYmzShield::restartEnvelope() {
  * 
  * Enables or disables tone output on a channel.
  */
-void hcYmzShield::setTone(uint8_t channel, boolean isEnabled) {
+void hcYmzShield::setTone(uint8_t channel, bool isEnabled) {
   // Direct Channels 3-5 to PSG1
   uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] :
+    this->_psg0Registers[0x07]);
   
   uint8_t mask = (1 << channel);
   
@@ -394,15 +397,16 @@ void hcYmzShield::setTone(uint8_t channel, boolean isEnabled) {
 /**
  * public hcYmzShield::isTone()
  * 
- * Returns boolean true if the current channel is being used for tone output.
+ * Returns bool true if the current channel is being used for tone output.
  */
-boolean hcYmzShield::isTone(uint8_t channel) {
+bool hcYmzShield::isTone(uint8_t channel) {
   // Direct Channels 3-5 to PSG1
   uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] :
+    this->_psg0Registers[0x07]);
   
   return(((data & (1 << channel)) == 0) ? true : false);
 }
@@ -413,13 +417,14 @@ boolean hcYmzShield::isTone(uint8_t channel) {
  * 
  * Enables or disables noise output on a channel.
  */
-void hcYmzShield::setNoise(uint8_t channel, boolean isEnabled) {
+void hcYmzShield::setNoise(uint8_t channel, bool isEnabled) {
   // Direct Channels 3-5 to PSG1
   uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] :
+    this->_psg0Registers[0x07]);
   
   uint8_t mask = (1 << (channel + 3));
   
@@ -432,15 +437,16 @@ void hcYmzShield::setNoise(uint8_t channel, boolean isEnabled) {
 /**
  * public hcYmzShield::isNoise()
  * 
- * Returns boolean true if the current channel is being used for noise output.
+ * Returns bool true if the current channel is being used for noise output.
  */
-boolean hcYmzShield::isNoise(uint8_t channel) {
+bool hcYmzShield::isNoise(uint8_t channel) {
   // Direct Channels 3-5 to PSG1
   uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] : this->_psg0Registers[0x07]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x07] :
+    this->_psg0Registers[0x07]);
   
   return(((data & (1 << (channel * 3))) == 0) ? true : false);
 }
@@ -469,7 +475,8 @@ void hcYmzShield::setVolume(uint8_t channel, uint8_t volume) {
   volume &= 0xf;
   
   // Pick up the noise bit
-  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]) & 0x10;
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] :
+    this->_psg0Registers[0x08]) & 0x10;
   
   this->_setRegister(0x08 + channel, volume + data, psg);
 }
@@ -485,7 +492,8 @@ byte hcYmzShield::getVolume(uint8_t channel) {
   uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
 
-  return(((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]) & 0xf);
+  return(((psg == 2) ? this->_psg1Registers[0x08] :
+    this->_psg0Registers[0x08]) & 0xf);
 }
 
 
@@ -506,13 +514,14 @@ void hcYmzShield::setVolume(uint8_t volume) {
  * 
  * Enables or disables mixing a channel through the envelope generator.
  */
-void hcYmzShield::setEnvelope(uint8_t channel, boolean isEnabled) {
+void hcYmzShield::setEnvelope(uint8_t channel, bool isEnabled) {
   // Direct Channels 3-5 to PSG1
   uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] :
+    this->_psg0Registers[0x08]);
   
   uint8_t mask = 0x10;
   
@@ -525,27 +534,31 @@ void hcYmzShield::setEnvelope(uint8_t channel, boolean isEnabled) {
 /**
  * public hcYmzShield::isEnvelope()
  * 
- * Returns boolean true if the current channel is being used for noise output.
+ * Returns bool true if the current channel is being used for noise output.
  */
-boolean hcYmzShield::isEnvelope(uint8_t channel) {
+bool hcYmzShield::isEnvelope(uint8_t channel) {
   // Direct Channels 3-5 to PSG1
   uint8_t psg = this->_psgDetect(channel);
   channel -= ((channel > 2) ? 3 : 0);
   
   // Pull the register
-  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]);
+  uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] :
+    this->_psg0Registers[0x08]);
   
   return(((data & 0x10) == 1) ? true : false);
 }
 
 
 /**
- * public hcYmzShield::setMidiChord()
+ * public hcYmzShield::setChannels()
  * 
- * Sets all six channels of the chip in one shot using MIDI notes. For sanity,
- * this function ignores all notes from 128-254. 255 is understood as OFF.
+ * Sets all six channels of the chip in one shot using MIDI notes. 255 is
+ * understood as OFF; 128 is understood as SKIP.
+ * 
+ * We will *NOT* waste clock cycles here to sanitize input.
  */
-void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5) {
+void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3,
+  uint8_t c4, uint8_t c5) {
   uint8_t channel[6] = {c0, c1, c2, c3, c4, c5};
   uint8_t i;
   
@@ -563,6 +576,62 @@ void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, ui
   for(i = 0; i < 6; i++)
     if(channel[i] != SKIP && channel[i] != OFF)
       this->setTone(i);
+}
+
+
+/**
+ * public hcYmzShield::setNote()
+ * 
+ * Sets a single channel to the given MIDI note. 255 is understood as OFF.
+ * 
+ * We will *NOT* waste clock cycles here to sanitize input.
+ */
+void hcYmzShield::setNote(uint8_t channel, uint8_t note) {
+  // First turn off the channel
+  this->setTone(channel, false);
+    
+  // Set the note and turn the channel on
+  if(note != OFF) {
+    this->setToneMidi(channel, note);
+    this->setTone(channel);
+  }
+}
+
+
+/**
+ * public hcYmzShield::setTempo()
+ * 
+ * Sets the current tempo in beats per minute (BPM).
+ */
+void hcYmzShield::setTempo(uint8_t bpm) {
+  this->_bpm = bpm;
+}
+
+
+/**
+ * public hcYmzShield::getTempo()
+ * 
+ * Returns the current tempo in beats per minute (BPM).
+ */
+uint8_t hcYmzShield::getTempo() {
+  return(this->_bpm);
+}
+
+
+/**
+ * public hcYmzShield::beat()
+ * 
+ * Delays the number of milliseconds relative to 1/beat at the current tempo.
+ * For example, at the default tempo of MODERATO, beat(4) would delay for
+ * 666 milliseconds, or one quarter note.
+ * 
+ * For dotted notes, you can pass DOT, DOUBLEDOT or TRIPLEDOT as the second
+ * parameter to extend the length.
+ */
+void hcYmzShield::beat(uint8_t beat, float dot) {
+  // There are 60,000 milliseconds per minute
+  uint16_t base = (60000/this->_bpm) * 4;
+  delay((base/beat) * dot);
 }
 
 
