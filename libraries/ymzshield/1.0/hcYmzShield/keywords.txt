@@ -1,0 +1,69 @@
+#######################################
+# YMZ Shield Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+PSG	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+setTonePeriod	KEYWORD2
+hcYmzShield	KEYWORD2
+setTonePeriod	KEYWORD2
+getTonePeriod	KEYWORD2
+setToneFrequency	KEYWORD2
+setToneMidi	KEYWORD2
+setNoisePeriod	KEYWORD2
+getNoisePeriod	KEYWORD2
+setNoiseFrequency	KEYWORD2
+mute	KEYWORD2
+setEnvelopePeriod	KEYWORD2
+getEnvelopePeriod	KEYWORD2
+setEnvelopeFrequency	KEYWORD2
+startEnvelope	KEYWORD2
+restartEnvelope	KEYWORD2
+setTone	KEYWORD2
+isTone	KEYWORD2
+setNoise	KEYWORD2
+isNoise	KEYWORD2
+setEnvelope	KEYWORD2
+isEnvelope	KEYWORD2
+setVolume	KEYWORD2
+getVolume	KEYWORD2
+setChannels	KEYWORD2
+_setRegister	KEYWORD2
+_shiftOut	KEYWORD2
+_busAddress	KEYWORD2
+_busData	KEYWORD2
+_psgWrite	KEYWORD2
+_psg0Write	KEYWORD2
+_psg1Write	KEYWORD2
+_psgDetect	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+CONT	LITERAL1
+ATT	LITERAL1
+ALT	LITERAL1
+HOLD	LITERAL1
+MASK_SER	LITERAL1
+MASK_RCK	LITERAL1
+MASK_SRCK	LITERAL1
+MASK_CS1	LITERAL1
+MASK_SEL	LITERAL1
+MASK_CS2	LITERAL1
+PIN_SER	LITERAL1
+PIN_RCK	LITERAL1
+PIN_SRCK	LITERAL1
+PIN_CS1	LITERAL1
+PIN_SEL	LITERAL1
+PIN_CS2	LITERAL1
+SKIP	LITERAL1
+OFF	LITERAL1
+

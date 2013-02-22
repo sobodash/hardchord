@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.h)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2.1
+ * Version 0.2.2
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -14,33 +14,36 @@
  */
 
 
-#ifndef __HCYMZSHIELD_H__
-#define __HCYMZSHIELD_H__
+#ifndef __HCYMZSHIELD_H
+#define __HCYMZSHIELD_H
 
 #include <Arduino.h>
 
-
 // Envelope controls
-#define __CONT__ B00001000
-#define __ATT__  B00000100
-#define __ALT__  B00000010
-#define __HOLD__ B00000001
+#define CONT B00001000
+#define ATT  B00000100
+#define ALT  B00000010
+#define HOLD B00000001
 
 // YMZ Shield pinning masks for AVR
-#define __MASK_SER__  B00000100
-#define __MASK_RCK__  B00001000
-#define __MASK_SRCK__ B00010000
-#define __MASK_CS1__  B00000100
-#define __MASK_SEL__  B00001000
-#define __MASK_CS2__  B00010000
+#define MASK_SER  B00000100
+#define MASK_RCK  B00001000
+#define MASK_SRCK B00010000
+#define MASK_CS1  B00000100
+#define MASK_SEL  B00001000
+#define MASK_CS2  B00010000
 
 // YMZ Shield pinning masks for digitalWrite
-#define __PIN_SER__  2
-#define __PIN_RCK__  3
-#define __PIN_SRCK__ 4
-#define __PIN_CS1__  10
-#define __PIN_SEL__  11
-#define __PIN_CS2__  12
+#define PIN_SER  2
+#define PIN_RCK  3
+#define PIN_SRCK 4
+#define PIN_CS1  10
+#define PIN_SEL  11
+#define PIN_CS2  12
+
+// Special note states
+#define SKIP 128
+#define OFF  255
 
 
 class hcYmzShield {
@@ -68,17 +71,21 @@ class hcYmzShield {
     void setVolume(uint8_t, uint8_t);
     void setVolume(uint8_t);
     uint8_t getVolume(uint8_t);
+    void setChannels(uint8_t, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF);
   private:
     uint8_t _psg0Registers[0x0d];
     uint8_t _psg1Registers[0x0d];
     void _setRegister(uint8_t, uint8_t, uint8_t = 0);
-    static void _shiftOut(uint8_t);
-    static void _busAddress();
-    static void _busData();
-    static void _psgWrite();
-    static void _psg0Write();
-    static void _psg1Write();
-    static uint8_t _psgDetect(uint8_t);
+    inline static void _shiftOut(uint8_t);
+    inline static void _busAddress();
+    inline static void _busData();
+    inline static void _psgWrite();
+    inline static void _psg0Write();
+    inline static void _psg1Write();
+    inline static uint8_t _psgDetect(uint8_t);
 };
 
-#endif __HCYMZSHIELD_H__
+extern hcYmzShield PSG;
+
+
+#endif __HCYMZSHIELD_H

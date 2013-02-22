@@ -1,7 +1,7 @@
 /**
  * Duck Hunt Demo (Round Start!)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2
+ * Version 0.2.1
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -15,20 +15,19 @@
 
 #include <hcYmzShield.h>
 
-hcYmzShield ymzShield;
 
 void setup() {
   Serial.begin(9600);
-  ymzShield.mute();
 }
+
 
 void loop() {
   Serial.println("Duck Hunt round start");
-  ymzShield.setVolume(0xd);
+  PSG.setVolume(0xd);
   
   demoDuckHunt();
   
-  ymzShield.mute();
+  PSG.mute();
   delay(3000);
 }
 
@@ -40,18 +39,18 @@ void loop() {
  */
 void playNote(uint8_t channel, uint8_t note) {
   if(note == 0) {
-    ymzShield.setVolume(channel, 8); delayMicroseconds(25);
-    ymzShield.setTone(channel, false);
-    ymzShield.setVolume(channel, 0);
+    PSG.setVolume(channel, 8); delayMicroseconds(25);
+    PSG.setTone(channel, false);
+    PSG.setVolume(channel, 0);
     return;
   }
   
-  ymzShield.setToneMidi(channel, note);
+  PSG.setToneMidi(channel, note);
   
-  if(ymzShield.isTone(channel) == false) {
-    ymzShield.setTone(channel);
-    ymzShield.setVolume(channel, 8); delayMicroseconds(25);
-    ymzShield.setVolume(channel, 15); delayMicroseconds(25);
+  if(PSG.isTone(channel) == false) {
+    PSG.setTone(channel);
+    PSG.setVolume(channel, 8); delayMicroseconds(25);
+    PSG.setVolume(channel, 15); delayMicroseconds(25);
   }
 }
 

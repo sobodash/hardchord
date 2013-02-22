@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2.1
+ * Version 0.2.2
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -13,14 +13,11 @@
  *    and/or other materials provided with the distribution. 
  */
 
-#include <Arduino.h>
 #include "hcYmzShield.h"
 
 
-// Enable this to use direct PORT access for super high-speed transfer.
-// Disable it if you find it is incompatible with your Arduino board (unlikely,
-// but possible with future revisions.
-#define __USE_AVR__
+// Create the handle to the shield.
+hcYmzShield PSG;
 
 
 // Base tone periods for the first 12 MIDI notes at 4MHz
@@ -33,66 +30,98 @@ static const uint16_t tpMidi[12] = {
 /**
  * Helper Methods
  * 
- * These static methods control data exchange with the YMZ284 chips and the 75HC595 serial shifter.
+ * These static methods control data exchange with the YMZ284 chips and the
+ * board's 75HC595 serial shifter.
  */
-#ifndef __USE_AVR__
+#if defined(__ATmega168__)  || defined(__ATMEGA328__)
 void hcYmzShield::_shiftOut(uint8_t value) {
-  digitalWrite(__PIN_RCK__, LOW);
-  shiftOut(__PIN_SER__, __PIN_SRCK__, MSBFIRST, value);
-  digitalWrite(__PIN_RCK__, HIGH);
+  PORTD &= ~MASK_RCK; // Latch
+  for(uint8_t i = 8; i; i--) {
+    PORTD &= ~MASK_SRCK; // Clock
+    PORTD &= ~MASK_SER; // Data
+    if(value & 0x80)
+      PORTD |= MASK_SER; // Data
+    value <<= 1;
+    PORTD |= MASK_SRCK; // Clock
+  }
+  PORTD |= MASK_RCK; // Latch
 }
 void hcYmzShield::_busAddress() {
-  digitalWrite(__PIN_SEL__, LOW);
+  PORTB &= ~MASK_SEL;
 }
 void hcYmzShield::_busData() {
-  digitalWrite(__PIN_SEL__, HIGH);
+  PORTB |= MASK_SEL;
 }
 void hcYmzShield::_psgWrite() {
-  digitalWrite(__PIN_CS2__, LOW);
-  digitalWrite(__PIN_CS1__, LOW);
-  digitalWrite(__PIN_CS2__, HIGH);
-  digitalWrite(__PIN_CS1__, HIGH);
+  PORTB &= ~B00010100; // MASK_CS1 | MASK_CS2
+  PORTB |= B00010100; // MASK_CS1 | MASK_CS2
 }
 void hcYmzShield::_psg0Write() {
-  digitalWrite(__PIN_CS2__, LOW);
-  digitalWrite(__PIN_CS2__, HIGH);
+  PORTB &= ~MASK_CS2;
+  PORTB |= MASK_CS2;
 }
 void hcYmzShield::_psg1Write() {
-  digitalWrite(__PIN_CS1__, LOW);
-  digitalWrite(__PIN_CS1__, HIGH);
+  PORTB &= ~MASK_CS1;
+  PORTB |= MASK_CS1;
+}
+#elif defined(__ATmega1280__) || defined(__ATmega2560__)
+void hcYmzShield::_shiftOut(uint8_t value) {
+  PORTE &= ~B00010000; // Latch
+  for(uint8_t i = 8; i; i--) {
+    PORTG &= ~B00100000; // Clock
+    PORTE &= ~B00010000; // Data
+    if(value & 0x80)
+      PORTE |= B00010000; // Data
+    value <<= 1;
+    PORTG |= B00100000; // Clock
+  }
+  PORTE |= B00010000; // Latch
+}
+void hcYmzShield::_busAddress() {
+  PORTB &= ~B00100000;
+}
+void hcYmzShield::_busData() {
+  PORTB |= B00100000;
+}
+void hcYmzShield::_psgWrite() {
+  PORTB &= ~B01010000; // MASK_CS1 | MASK_CS2
+  PORTB |= B01010000; // MASK_CS1 | MASK_CS2
+}
+void hcYmzShield::_psg0Write() {
+  PORTB &= ~B00010000;
+  PORTB |= B00010000;
+}
+void hcYmzShield::_psg1Write() {
+  PORTB &= ~B01000000;
+  PORTB |= B01000000;
 }
 #else
 void hcYmzShield::_shiftOut(uint8_t value) {
-  PORTD &= ~__MASK_RCK__;
-  for(uint8_t i = 8; i; i--) {
-    PORTD &= ~__MASK_SRCK__; // Clock
-    PORTD &= ~__MASK_SER__; // Data
-    if(value & 0x80)
-      PORTD |= __MASK_SER__; // Data
-    value <<= 1;
-    PORTD |= __MASK_SRCK__; // Clock
-  }
-  PORTD |= __MASK_RCK__;
+  digitalWrite(PIN_RCK, LOW);
+  shiftOut(PIN_SER, PIN_SRCK, MSBFIRST, value);
+  digitalWrite(PIN_RCK, HIGH);
 }
 void hcYmzShield::_busAddress() {
-  PORTB &= ~__MASK_SEL__;
+  digitalWrite(PIN_SEL, LOW);
 }
 void hcYmzShield::_busData() {
-  PORTB |= __MASK_SEL__;
+  digitalWrite(PIN_SEL, HIGH);
 }
 void hcYmzShield::_psgWrite() {
-  PORTB &= ~B00010100; // __MASK_CS1__ | __MASK_CS2__
-  PORTB |= B00010100; // __MASK_CS1__ | __MASK_CS2__
+  digitalWrite(PIN_CS2, LOW);
+  digitalWrite(PIN_CS1, LOW);
+  digitalWrite(PIN_CS2, HIGH);
+  digitalWrite(PIN_CS1, HIGH);
 }
 void hcYmzShield::_psg0Write() {
-  PORTB &= ~__MASK_CS2__;
-  PORTB |= __MASK_CS2__;
+  digitalWrite(PIN_CS2, LOW);
+  digitalWrite(PIN_CS2, HIGH);
 }
 void hcYmzShield::_psg1Write() {
-  PORTB &= ~__MASK_CS1__;
-  PORTB |= __MASK_CS1__;
+  digitalWrite(PIN_CS1, LOW);
+  digitalWrite(PIN_CS1, HIGH);
 }
-#endif __USE_AVR__
+#endif
 
 
 /**
@@ -101,22 +130,27 @@ void hcYmzShield::_psg1Write() {
  * Initializes the shield as an object.
  */
 hcYmzShield::hcYmzShield() {
-  #ifndef __USE_AVR__
-  pinMode(__PIN_SER__,  OUTPUT);
-  pinMode(__PIN_RCK__,  OUTPUT);
-  pinMode(__PIN_SRCK__, OUTPUT);
-  pinMode(__PIN_CS1__,  OUTPUT);
-  pinMode(__PIN_SEL__,  OUTPUT);
-  pinMode(__PIN_CS2__,  OUTPUT);
+  #if defined(__ATmega168__)  || defined(__ATMEGA328__)
+  DDRB  |= B00011100; // MASK_CS1 | MASK_SEL | MASK_CS2
+  DDRD  |= B00011100; // MASK_SER | MASK_RCK | MASK_SRCK
+  PORTB |= B00010100; // MASK_CS1 | MASK_CS2
+  #elif defined(__ATmega1280__) || defined(__ATmega2560__)
+  DDRB  |= B01110000; // CS1 | SEL | CS2
+  DDRE  |= B00110000; // SER | RCK
+  DDRG  |= B00100000; // SRCK
+  PORTB |= B01010000; // CS1 | CS2
+  #else
+  pinMode(PIN_SER,  OUTPUT);
+  pinMode(PIN_RCK,  OUTPUT);
+  pinMode(PIN_SRCK, OUTPUT);
+  pinMode(PIN_CS1,  OUTPUT);
+  pinMode(PIN_SEL,  OUTPUT);
+  pinMode(PIN_CS2,  OUTPUT);
   
   // Disable writing until we actually want to do it
-  digitalWrite(__PIN_CS1__, HIGH);
-  digitalWrite(__PIN_CS2__, HIGH);
-  #else
-  DDRB  |= B00011100; // __MASK_CS1__ | __MASK_SEL__ | __MASK_CS2__
-  DDRD  |= B00011100; // __MASK_SER__ | __MASK_RCK__ | __MASK_SRCK__
-  PORTB |= B00010100; // __MASK_CS1__ | __MASK_CS2__
-  #endif __USE_AVR__
+  digitalWrite(PIN_CS1, HIGH);
+  digitalWrite(PIN_CS2, HIGH);
+  #endif
   
   // Initialize register backup to 0
   memset(this->_psg0Registers, 0, 0x0d);
@@ -168,8 +202,7 @@ void hcYmzShield::_setRegister(uint8_t reg, uint8_t data, uint8_t psg) {
 /**
  * public hcYmzShield::setTonePeriod()
  * 
- * Sets the tone period (TP) of a channel. The formula for the frequency output is:
- * 
+ * Sets the tone period (TP) of a channel. Frequency is generated as
  * Hz = (4 * 10^6) / (32 * TP)
  */
 void hcYmzShield::setTonePeriod(uint8_t channel, uint16_t tp) {
@@ -185,7 +218,7 @@ void hcYmzShield::setTonePeriod(uint8_t channel, uint16_t tp) {
 
 
 /**
- * public hcYmzShield:getTonePeriod()
+ * public hcYmzShield::getTonePeriod()
  * 
  * Returns the current tone period of a channel.
  */
@@ -256,7 +289,7 @@ void hcYmzShield::setNoisePeriod(uint8_t np) {
 
 
 /**
- * public hcYmzShield:getNoisePeriod()
+ * public hcYmzShield::getNoisePeriod()
  * 
  * Returns the current noise period of the shield.
  */
@@ -278,7 +311,7 @@ void hcYmzShield::setNoiseFrequency(float hz) {
 
 
 /**
- * public hcYmzShield:setEnvelopePeriod()
+ * public hcYmzShield::setEnvelopePeriod()
  * 
  * Adjust the envelope period (EP) to adjust how frequently the noise
  * envelope repeats.
@@ -293,7 +326,7 @@ void hcYmzShield::setEnvelopePeriod(uint16_t ep) {
 
 
 /**
- * public hcYmzShield:getEnvelopePeriod()
+ * public hcYmzShield::getEnvelopePeriod()
  * 
  * Returns the current envelope period of the shield.
  */
@@ -303,7 +336,7 @@ uint16_t hcYmzShield::getEnvelopePeriod() {
 
 
 /**
- * public hcYmzShield:setEnvelopeFrequency()
+ * public hcYmzShield::setEnvelopeFrequency()
  * 
  * Sets the envelope period to a given frequency in Hz.
  */
@@ -319,7 +352,7 @@ void hcYmzShield::setEnvelopeFrequency(float hz) {
  * public hcYmzShield::startEnvelope()
  * 
  * Sets the shape of the noise envelope. Only the lower 4 bits of the
- * register are used. The bits correspond toggle CONTINUE, ATTACK, ALTERNATE and HOLD.
+ * register are used. The bits toggle CONTINUE, ATTACK, ALTERNATE and HOLD.
  */
 void hcYmzShield::startEnvelope(uint8_t shape) {
   shape &= 0xf;
@@ -338,7 +371,7 @@ void hcYmzShield::restartEnvelope() {
 
 
 /**
- * public hcYmzShield:setTone()
+ * public hcYmzShield::setTone()
  * 
  * Enables or disables tone output on a channel.
  */
@@ -359,7 +392,7 @@ void hcYmzShield::setTone(uint8_t channel, boolean isEnabled) {
 
 
 /**
- * public hcYmzShield:isTone()
+ * public hcYmzShield::isTone()
  * 
  * Returns boolean true if the current channel is being used for tone output.
  */
@@ -376,7 +409,7 @@ boolean hcYmzShield::isTone(uint8_t channel) {
 
 
 /**
- * public hcYmzShield:setNoise()
+ * public hcYmzShield::setNoise()
  * 
  * Enables or disables noise output on a channel.
  */
@@ -397,7 +430,7 @@ void hcYmzShield::setNoise(uint8_t channel, boolean isEnabled) {
 
 
 /**
- * public hcYmzShield:isNoise()
+ * public hcYmzShield::isNoise()
  * 
  * Returns boolean true if the current channel is being used for noise output.
  */
@@ -414,7 +447,7 @@ boolean hcYmzShield::isNoise(uint8_t channel) {
 
 
 /**
- * public hcYmzShield:mute()
+ * public hcYmzShield::mute()
  * 
  * Toggle sound channels off.
  */
@@ -424,7 +457,7 @@ void hcYmzShield::mute() {
 
 
 /**
- * public hcYmzShield:setVolume()
+ * public hcYmzShield::setVolume()
  * 
  * Adjust the value of each channel.
  */
@@ -443,7 +476,7 @@ void hcYmzShield::setVolume(uint8_t channel, uint8_t volume) {
 
 
 /**
- * public hcYmzShield:getVolume()
+ * public hcYmzShield::getVolume()
  * 
  * Returns the volume of a channel.
  */
@@ -457,7 +490,7 @@ byte hcYmzShield::getVolume(uint8_t channel) {
 
 
 /**
- * public hcYmzShield:setVolume()
+ * public hcYmzShield::setVolume()
  * 
  * Adjust the value of all channels.
  */
@@ -469,7 +502,7 @@ void hcYmzShield::setVolume(uint8_t volume) {
 
 
 /**
- * public hcYmzShield:setEnvelope()
+ * public hcYmzShield::setEnvelope()
  * 
  * Enables or disables mixing a channel through the envelope generator.
  */
@@ -490,7 +523,7 @@ void hcYmzShield::setEnvelope(uint8_t channel, boolean isEnabled) {
 
 
 /**
- * public hcYmzShield:isEnvelope()
+ * public hcYmzShield::isEnvelope()
  * 
  * Returns boolean true if the current channel is being used for noise output.
  */
@@ -503,6 +536,33 @@ boolean hcYmzShield::isEnvelope(uint8_t channel) {
   uint8_t data = ((psg == 2) ? this->_psg1Registers[0x08] : this->_psg0Registers[0x08]);
   
   return(((data & 0x10) == 1) ? true : false);
+}
+
+
+/**
+ * public hcYmzShield::setMidiChord()
+ * 
+ * Sets all six channels of the chip in one shot using MIDI notes. For sanity,
+ * this function ignores all notes from 128-254. 255 is understood as OFF.
+ */
+void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5) {
+  uint8_t channel[6] = {c0, c1, c2, c3, c4, c5};
+  uint8_t i;
+  
+  // First turn off any notes we will change
+  for(i = 0; i < 6; i++)
+    if(channel[i] != SKIP)
+      this->setTone(i, false);
+    
+  // Now set the new notes
+  for(i = 0; i < 6; i++)
+    if(channel[i] != SKIP && channel[i] != OFF)
+      this->setToneMidi(i, channel[i]);
+  
+  // And then re-enable output
+  for(i = 0; i < 6; i++)
+    if(channel[i] != SKIP && channel[i] != OFF)
+      this->setTone(i);
 }
 
 

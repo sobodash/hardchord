@@ -15,21 +15,21 @@
 
 #include <hcYmzShield.h>
 
-hcYmzShield ymzShield;
 
 void setup() {
   Serial.begin(9600);
 }
 
+
 void loop() {
   Serial.println("Battle Theme from Final Fantasy VII");
-  ymzShield.setVolume(0xd);
+  PSG.setVolume(0xd);
   
-  ymzShield.setEnvelopePeriod(0x50);
-  ymzShield.setNoisePeriod(0xf);
-  ymzShield.setEnvelope(5);
-  ymzShield.setEnvelope(4);
-  ymzShield.startEnvelope(__CONT__|__ATT__|__HOLD__);
+  PSG.setEnvelopePeriod(0x50);
+  PSG.setNoisePeriod(0xf);
+  PSG.setEnvelope(5);
+  PSG.setEnvelope(4);
+  PSG.startEnvelope(CONT | ATT | HOLD);
   
   demoFF7Battle();
 }
@@ -42,21 +42,21 @@ void loop() {
  */
 void playNote(uint8_t channel, uint8_t note) {
   if(note == 0) {
-    if(!ymzShield.isEnvelope(channel)) {
-      ymzShield.setVolume(channel, 0);
+    if(!PSG.isEnvelope(channel)) {
+      PSG.setVolume(channel, 0);
     }
-    ymzShield.setTone(channel, false);
+    PSG.setTone(channel, false);
     return;
   }
   
   // Restart the envelope on each note
-  ymzShield.startEnvelope(__CONT__|__ATT__|__HOLD__);
-  ymzShield.setToneMidi(channel, note);
+  PSG.startEnvelope(CONT | ATT | HOLD);
+  PSG.setToneMidi(channel, note);
 
-  ymzShield.setTone(channel);
-  if(!ymzShield.isEnvelope(channel)) {
-    ymzShield.setVolume(channel, 4); delayMicroseconds(25);
-    ymzShield.setVolume(channel, 13);
+  PSG.setTone(channel);
+  if(!PSG.isEnvelope(channel)) {
+    PSG.setVolume(channel, 4); delayMicroseconds(25);
+    PSG.setVolume(channel, 13);
   }
 }
 

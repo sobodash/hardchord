@@ -15,28 +15,27 @@
 
 #include <hcYmzShield.h>
 
-hcYmzShield ymzShield;
 
 void setup() {
   Serial.begin(9600);
-  ymzShield.mute();
 }
+
 
 void loop() {
   Serial.println("12 shots on an 8-bit machine gun");
-  ymzShield.setVolume(0);
+  PSG.setVolume(0);
   
-  ymzShield.setEnvelopePeriod(0xfa0);
-  ymzShield.setNoisePeriod(0xf);
-  ymzShield.setNoise(0);
-  ymzShield.setEnvelope(0);
+  PSG.setEnvelopePeriod(0xfa0);
+  PSG.setNoisePeriod(0xf);
+  PSG.setNoise(0);
+  PSG.setEnvelope(0);
   for(uint8_t bullets = 0; bullets < 12; bullets++) {
-    ymzShield.startEnvelope(__CONT__); delay(80);
+    PSG.startEnvelope(CONT); delay(80);
   }
-  ymzShield.setNoise(0, false);
-  ymzShield.setEnvelope(0, false);
+  PSG.setNoise(0, false);
+  PSG.setEnvelope(0, false);
   
-  ymzShield.mute();
+  PSG.mute();
   delay(3000);
 }
 

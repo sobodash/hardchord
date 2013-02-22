@@ -15,28 +15,27 @@
 
 #include <hcYmzShield.h>
 
-hcYmzShield ymzShield;
 
 void setup() {
   Serial.begin(9600);
-  ymzShield.mute();
 }
+
 
 void loop() {
   Serial.println("Descending an 8-bit staricase");
   
-  ymzShield.setVolume(0xe);
-  ymzShield.setEnvelopePeriod(0xc00);
-  ymzShield.setNoisePeriod(0x4);
-  ymzShield.setNoise(0);
-  ymzShield.setEnvelope(0);
-  ymzShield.startEnvelope(__CONT__ | __ATT__);
+  PSG.setVolume(0xe);
+  PSG.setEnvelopePeriod(0xc00);
+  PSG.setNoisePeriod(0x4);
+  PSG.setNoise(0);
+  PSG.setEnvelope(0);
+  PSG.startEnvelope(CONT | ATT);
   delay(1700);
-  ymzShield.setNoise(0, false);
-  ymzShield.setEnvelope(0, false);
-  ymzShield.setVolume(0x0);
+  PSG.setNoise(0, false);
+  PSG.setEnvelope(0, false);
+  PSG.setVolume(0x0);
   
-  ymzShield.mute();
+  PSG.mute();
   delay(3000);
 }
 

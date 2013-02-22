@@ -15,22 +15,21 @@
 
 #include <hcYmzShield.h>
 
-hcYmzShield ymzShield;
 
 void setup() {
   Serial.begin(9600);
-  ymzShield.mute();
 }
+
 
 void loop() {
   Serial.println("HADOUKEN!");
-  ymzShield.setVolume(0xd);
+  PSG.setVolume(0xd);
   
-  ymzShield.setEnvelopePeriod(0x80);
-  ymzShield.setNoisePeriod(0xf);
-  ymzShield.setEnvelope(5);
-  ymzShield.setVolume(5, 0x4);
-  ymzShield.startEnvelope(__CONT__|__ATT__|__HOLD__);
+  PSG.setEnvelopePeriod(0x80);
+  PSG.setNoisePeriod(0xf);
+  PSG.setEnvelope(5);
+  PSG.setVolume(5, 0x4);
+  PSG.startEnvelope(CONT | ATT | HOLD);
   
   demoShanzhaiFighter();
 }
@@ -43,22 +42,22 @@ void loop() {
  */
 void playNote(uint8_t channel, uint8_t note) {
   if(note == 0) {
-    if(!ymzShield.isEnvelope(channel)) {
-      ymzShield.setVolume(channel, 0);
+    if(!PSG.isEnvelope(channel)) {
+      PSG.setVolume(channel, 0);
     }
-    ymzShield.setTone(channel, false);
+    PSG.setTone(channel, false);
     return;
   }
   
   // Restart the envelope on each note
-  if(ymzShield.isEnvelope(channel))
-    ymzShield.startEnvelope(__CONT__|__ATT__|__HOLD__);
-  ymzShield.setToneMidi(channel, note);
+  if(PSG.isEnvelope(channel))
+    PSG.startEnvelope(CONT | ATT | HOLD);
+  PSG.setToneMidi(channel, note);
 
-  ymzShield.setTone(channel);
-  if(!ymzShield.isEnvelope(channel)) {
-    ymzShield.setVolume(channel, 4); delayMicroseconds(25);
-    ymzShield.setVolume(channel, 14);
+  PSG.setTone(channel);
+  if(!PSG.isEnvelope(channel)) {
+    PSG.setVolume(channel, 4); delayMicroseconds(25);
+    PSG.setVolume(channel, 14);
   }
 }
 
@@ -1684,5 +1683,5 @@ void demoShanzhaiFighter() {
   delay(107);
   playNote(1, 41);
   delay(4);
-  ymzShield.mute();
+  PSG.mute();
 }
