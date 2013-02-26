@@ -106,8 +106,8 @@ class hcYmzShield {
     void setVolume(uint8_t, uint8_t);
     void setVolume(uint8_t);
     uint8_t getVolume(uint8_t);
-    void setChannels(uint8_t, uint8_t = SKIP, uint8_t = SKIP, uint8_t = SKIP, 
-      uint8_t = SKIP, uint8_t = SKIP);
+    void setChannels(uint8_t, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, 
+      uint8_t = OFF, uint8_t = OFF);
     void setNote(uint8_t, uint8_t);
     void setTempo(uint8_t);
     uint8_t getTempo();
@@ -116,14 +116,17 @@ class hcYmzShield {
     uint8_t _psg0Registers[0x0d];
     uint8_t _psg1Registers[0x0d];
     uint8_t _bpm = MODERATO;
-    void _setRegister(uint8_t, uint8_t, uint8_t = 0);
+    void _setRegisterPsg(uint8_t, uint8_t);
+    void _setRegisterPsg0(uint8_t, uint8_t);
+    void _setRegisterPsg1(uint8_t, uint8_t);
     inline static void _shiftOut(uint8_t);
     inline static void _busAddress();
+    inline static void _debugLightOn();
+    inline static void _debugLightOff();
     inline static void _busData();
     inline static void _psgWrite();
     inline static void _psg0Write();
     inline static void _psg1Write();
-    inline static uint8_t _psgDetect(uint8_t);
 };
 
 extern hcYmzShield PSG;

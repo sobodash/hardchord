@@ -24,6 +24,7 @@ void setup() {
 void loop() {
   Serial.println("Now heading for the streets of Suzhou...");
 
+  PSG.setTempo(130);
   PSG.setVolume(0, 8);
   PSG.setVolume(1, 10);
   PSG.setVolume(2, 8);
@@ -36,7 +37,6 @@ void loop() {
   PSG.setEnvelope(5);
   PSG.startEnvelope(CONT | ATT | HOLD);
 
-  PSG.setTempo(130);
   demoXianJian();
 }
 
