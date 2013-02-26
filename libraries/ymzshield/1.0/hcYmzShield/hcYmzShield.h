@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.h)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2.2
+ * Version 0.2.5
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -115,6 +115,7 @@ class hcYmzShield {
   private:
     uint8_t _psg0Registers[0x0d];
     uint8_t _psg1Registers[0x0d];
+    uint8_t _tone;
     uint8_t _bpm = MODERATO;
     void _setRegisterPsg(uint8_t, uint8_t);
     void _setRegisterPsg0(uint8_t, uint8_t);

@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2.2
+ * Version 0.2.5
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -174,22 +174,6 @@ hcYmzShield::hcYmzShield() {
   memset(this->_psg1Registers, 0, 0x0d);
   
   // Comply with specs
-  this->_setRegisterPsg(0x00, 0x00);
-  this->_setRegisterPsg(0x01, 0x00);
-  this->_setRegisterPsg(0x02, 0x00);
-  this->_setRegisterPsg(0x03, 0x00);
-  this->_setRegisterPsg(0x04, 0x00);
-  this->_setRegisterPsg(0x05, 0x00);
-  this->_setRegisterPsg(0x06, 0x00);
-  this->_setRegisterPsg(0x07, 0xb8);
-  this->_setRegisterPsg(0x08, 0x00);
-  this->_setRegisterPsg(0x09, 0x00);
-  this->_setRegisterPsg(0x0a, 0x00);
-  this->_setRegisterPsg(0x0b, 0x0d);
-  this->_setRegisterPsg(0x0c, 0x00);
-  this->_setRegisterPsg(0x0d, 0x00);
-  this->_setRegisterPsg(0x0e, 0x00);
-  this->_setRegisterPsg(0x0f, 0x00);
   
   // Make sure the speakers don't fart
   this->mute();
@@ -452,7 +436,7 @@ void hcYmzShield::restartEnvelope() {
  */
 void hcYmzShield::setTone(uint8_t channel, bool isEnabled) {
   if(channel > 2)
-    this->_setRegisterPsg1(0x07, (isEnabled ? this->_psg1Registers[0x07] & ~(1 << (channel-3)) : this->_psg1Registers[0x07] | (1 << (channel-3))) & 0x3f);
+    this->_setRegisterPsg1(0x07, (isEnabled ? this->_psg1Registers[0x07] & ~(1 << (channel - 3)) : this->_psg1Registers[0x07] | (1 << (channel - 3))) & 0x3f);
   else
     this->_setRegisterPsg0(0x07, (isEnabled ? this->_psg1Registers[0x07] & ~(1 << channel) : this->_psg1Registers[0x07] | (1 << channel)) & 0x3f);
 }
@@ -503,6 +487,7 @@ bool hcYmzShield::isNoise(uint8_t channel) {
  * Toggle sound channels off.
  */
 void hcYmzShield::mute() {
+  this->_tone = 0;
   this->_setRegisterPsg(0x07, B10111111);
 }
 
@@ -586,33 +571,29 @@ bool hcYmzShield::isEnvelope(uint8_t channel) {
  */
 void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5) {
   uint8_t channel[6] = {c0, c1, c2, c3, c4, c5};
-  uint8_t i, statea = 0, stateb = 0, enda = 0, endb = 0;
-  
-  // First turn off any notes we will change
-  for(i = 0; i < 3; i++) {
-    if(channel[i] != SKIP)
-      statea |= (1 << i);
-    if(channel[i] != OFF)
-      enda |= (1 << i);
-  }
-  for(i = 3; i < 6; i++) {
-    if(channel[i] != SKIP)
-      stateb |= (1 << (i-3));
-    if(channel[i] != OFF)
-      endb |= (1 << (i-3));
-  }
 
-  this->_setRegisterPsg0(0x07, this->_psg0Registers[0x07] | statea);
-  this->_setRegisterPsg1(0x07, this->_psg1Registers[0x07] | stateb);
+  uint8_t i, state = 0;
+
+  // First turn off any notes we will change
+  for(i = 0; i < 6; i++) {
+    if(channel[i] != SKIP)
+      state |= (1 << i);
+    if(channel[i] == OFF)
+      this->_tone &= ~(1 << i);
+    else if(channel[i] < 128)
+      this->_tone |= (1 << i);
+  }
   
+  this->_setRegisterPsg0(0x07, this->_psg0Registers[0x07] | (state & B00000111));
+  this->_setRegisterPsg1(0x07, this->_psg1Registers[0x07] | (state >> 3));
+
   // Now set the new notes
   for(i = 0; i < 6; i++)
-    if(channel[i] != SKIP && channel[i] != OFF)
+    if(channel[i] != OFF && channel[i] != SKIP)
       this->setToneMidi(i, channel[i]);
-  
-  // Turn whichever channels we are still using back on
-  this->_setRegisterPsg0(0x07, this->_psg0Registers[0x07] & ~enda);
-  this->_setRegisterPsg1(0x07, this->_psg1Registers[0x07] & ~endb);
+
+  this->_setRegisterPsg0(0x07, this->_psg0Registers[0x07] & ~(this->_tone & B00000111));
+  this->_setRegisterPsg1(0x07, this->_psg1Registers[0x07] & ~(this->_tone >> 3));
 
 }
 
