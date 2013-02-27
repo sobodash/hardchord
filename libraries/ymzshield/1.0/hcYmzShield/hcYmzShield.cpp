@@ -148,7 +148,6 @@ void hcYmzShield::_debugLightOff() {
  * Initializes the shield as an object.
  */
 hcYmzShield::hcYmzShield() {
-  this->_bmp = MODERATO;
   #if defined(__ATmega168__)  || defined(__ATMEGA328__)
   DDRB  |= B00111100; // MASK_CS1 | MASK_SEL | MASK_CS2
   DDRD  |= B00011100; // MASK_SER | MASK_RCK | MASK_SRCK
@@ -174,7 +173,8 @@ hcYmzShield::hcYmzShield() {
   memset(this->_psg0Registers, 0, 0x0d);
   memset(this->_psg1Registers, 0, 0x0d);
   
-  // Comply with specs
+  // Set default tempo
+  this->_bmp = MODERATO;
   
   // Make sure the speakers don't fart
   this->mute();

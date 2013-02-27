@@ -106,8 +106,7 @@ class hcYmzShield {
     void setVolume(uint8_t, uint8_t);
     void setVolume(uint8_t);
     uint8_t getVolume(uint8_t);
-    void setChannels(uint8_t, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, 
-      uint8_t = OFF, uint8_t = OFF);
+    void setChannels(uint8_t, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF);
     void setNote(uint8_t, uint8_t);
     void setTempo(uint8_t);
     uint8_t getTempo();
