@@ -116,7 +116,7 @@ class hcYmzShield {
     uint8_t _psg0Registers[0x0d];
     uint8_t _psg1Registers[0x0d];
     uint8_t _tone;
-    uint8_t _bpm = MODERATO;
+    uint8_t _bpm;
     void _setRegisterPsg(uint8_t, uint8_t);
     void _setRegisterPsg0(uint8_t, uint8_t);
     void _setRegisterPsg1(uint8_t, uint8_t);

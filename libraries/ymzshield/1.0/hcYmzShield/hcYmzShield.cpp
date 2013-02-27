@@ -148,6 +148,7 @@ void hcYmzShield::_debugLightOff() {
  * Initializes the shield as an object.
  */
 hcYmzShield::hcYmzShield() {
+  this->_bmp = MODERATO;
   #if defined(__ATmega168__)  || defined(__ATMEGA328__)
   DDRB  |= B00111100; // MASK_CS1 | MASK_SEL | MASK_CS2
   DDRD  |= B00011100; // MASK_SER | MASK_RCK | MASK_SRCK
