@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2.5
+ * Version 0.3.0
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,10 +21,37 @@ hcYmzShield PSG;
 
 
 // Base tone periods for the first 12 MIDI notes at 4MHz
+#ifdef __FAVOR_PRECISION
+static const uint16_t tpMidi[128] = {
+      0,     0,     0,     0,     0,     0, // Octave -1
+      0,     0,     0,     0,     0,     0,
+      0,     0,     0,     0,     0,     0, // Octave 0
+      0,     0,     0,     0,     0,     0,
+   3822,  3608,  3405,  3214,  3034,  2863, // Octave 1
+   2703,  2551,  2408,  2273,  2145,  2025,
+   1911,  1804,  1703,  1607,  1517,  1432, // Octave 2
+   1351,  1276,  1204,  1136,  1073,  1012,
+    956,   902,   851,   804,   758,   716, // Octave 3
+    676,   638,   602,   568,   536,   506,
+    478,   451,   426,   402,   379,   358, // Octave 4
+    338,   319,   301,   284,   268,   253,
+    239,   225,   213,   201,   190,   179, // Octave 5
+    169,   159,   150,   142,   134,   127,
+    119,   113,   106,   100,    95,    89, // Octave 6
+     84,    80,    75,    71,    67,    63,
+     60,    56,    53,    50,    47,    45, // Octave 7
+     42,    40,    38,    36,    34,    32,
+     30,     0,     0,     0,     0,     0, // Octave 8
+      0,     0,     0,     0,     0,     0,
+      0,     0,     0,     0,     0,     0, // Octave 9
+      0,     0
+};
+#else
 static const uint16_t tpMidi[12] = {
   15289, 14431, 13621, 12856, 12135, 11454,
   10811, 10204,  9631,  9091,  8581,  8099
 };
+#endif
 
 
 /**
@@ -149,11 +176,11 @@ void hcYmzShield::_debugLightOff() {
  */
 hcYmzShield::hcYmzShield() {
   #if defined(__ATmega168__)  || defined(__ATMEGA328__)
-  DDRB  |= B00111100; // MASK_CS1 | MASK_SEL | MASK_CS2
+  DDRB  |= B00111100; // LED | MASK_CS1 | MASK_SEL | MASK_CS2
   DDRD  |= B00011100; // MASK_SER | MASK_RCK | MASK_SRCK
   PORTB |= B00010100; // MASK_CS1 | MASK_CS2
   #elif defined(__ATmega1280__) || defined(__ATmega2560__)
-  DDRB  |= B11110000; // CS1 | SEL | CS2
+  DDRB  |= B11110000; // LED | CS1 | SEL | CS2
   DDRE  |= B00110000; // SER | RCK
   DDRG  |= B00100000; // SRCK
   PORTB |= B01010000; // CS1 | CS2
@@ -164,7 +191,7 @@ hcYmzShield::hcYmzShield() {
   pinMode(PIN_CS1,  OUTPUT);
   pinMode(PIN_SEL,  OUTPUT);
   pinMode(PIN_CS2,  OUTPUT);
-  pinMode(13,       OUTPUT);
+  pinMode(13,       OUTPUT); // LED
   digitalWrite(PIN_CS1, HIGH);
   digitalWrite(PIN_CS2, HIGH);
   #endif
@@ -175,6 +202,9 @@ hcYmzShield::hcYmzShield() {
   
   // Set default tempo
   this->_bmp = MODERATO;
+
+  // Set default articulation
+  this->_articulation = 10;
   
   // Make sure the speakers don't fart
   this->mute();
@@ -324,7 +354,11 @@ void hcYmzShield::setToneFrequency(uint8_t channel, float hz) {
  * Sets the tone period of a channel to produce the given MIDI note.
  */
 void hcYmzShield::setToneMidi(uint8_t channel, uint16_t note) {
+  #ifdef __FAVOR_PRECISION
+  uint16_t tp = tpMidi[note];
+  #else
   uint16_t tp = ((note > 12) ? (tpMidi[note%12] >> (note/12)) : tpMidi[note]);
+  #endif
   
   if(channel > 2) {
     this->_setRegisterPsg1(((channel -= 3) *= 2), tp & 0xff);
@@ -572,7 +606,6 @@ bool hcYmzShield::isEnvelope(uint8_t channel) {
  */
 void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5) {
   uint8_t channel[6] = {c0, c1, c2, c3, c4, c5};
-
   uint8_t i, state = 0;
 
   // First turn off any notes we will change
@@ -592,7 +625,10 @@ void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, ui
   for(i = 0; i < 6; i++)
     if(channel[i] != OFF && channel[i] != SKIP)
       this->setToneMidi(i, channel[i]);
-
+  
+  // Pause for articulation
+  delay(this->_articulation);
+  
   this->_setRegisterPsg0(0x07, this->_psg0Registers[0x07] & ~(this->_tone & B00000111));
   this->_setRegisterPsg1(0x07, this->_psg1Registers[0x07] & ~(this->_tone >> 3));
 
@@ -613,6 +649,10 @@ void hcYmzShield::setNote(uint8_t channel, uint8_t note) {
   // Set the note and turn the channel on
   if(note != OFF) {
     this->setToneMidi(channel, note);
+    
+    // Pause for articulation
+    delay(this->_articulation);
+    
     this->setTone(channel);
   }
 }
@@ -639,6 +679,17 @@ uint8_t hcYmzShield::getTempo() {
 
 
 /**
+ * public hcYmzShield::setArticulation()
+ * 
+ * Set the articulation between notes to STACCATO or LEGATO. Call it with no
+ * parameters to return to default spacing.
+ */
+void hcYmzShield::setArticulation(uint8_t tonguing) {
+  this->_articulation = tonguing;
+}
+
+
+/**
  * public hcYmzShield::beat()
  * 
  * Delays the number of milliseconds relative to 1/beat at the current tempo.
@@ -651,7 +702,8 @@ uint8_t hcYmzShield::getTempo() {
  * There are 60,000 milliseconds per minute.
  */
 void hcYmzShield::beat(uint8_t beat, float dot) {
-  delay((((60000/this->_bpm) * 4)/beat) * dot);
+  // Subtract articulation to keep beat count
+  delay((((60000/this->_bpm) * 4)/beat) * dot - this->_articulation);
 }
 
 

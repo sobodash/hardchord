@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.h)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2.5
+ * Version 0.3.0
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -78,6 +78,10 @@
 #define PRESTO 174
 #define PRESTISSIMO 180
 
+// Articulation
+#define STACCATO 30
+#define LEGATO 0
+
 #endif __HCINTERNALS
 
 
@@ -109,6 +113,7 @@ class hcYmzShield {
     void setChannels(uint8_t, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF);
     void setNote(uint8_t, uint8_t);
     void setTempo(uint8_t);
+    void setArticulation(uint8_t = 10);
     uint8_t getTempo();
     void beat(uint8_t, float = 1.0);
   private:
@@ -116,6 +121,7 @@ class hcYmzShield {
     uint8_t _psg1Registers[0x0d];
     uint8_t _tone;
     uint8_t _bpm;
+    uint8_t _articulation;
     void _setRegisterPsg(uint8_t, uint8_t);
     void _setRegisterPsg0(uint8_t, uint8_t);
     void _setRegisterPsg1(uint8_t, uint8_t);
