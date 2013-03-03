@@ -201,10 +201,10 @@ hcYmzShield::hcYmzShield() {
   memset(this->_psg1Registers, 0, 0x0d);
   
   // Set default tempo
-  this->_bmp = MODERATO;
+  this->_bpm = MODERATO;
 
   // Set default articulation
-  this->_articulation = 10;
+  this->_articulation = 8;
   
   // Make sure the speakers don't fart
   this->mute();

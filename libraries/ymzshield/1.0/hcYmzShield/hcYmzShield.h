@@ -79,7 +79,7 @@
 #define PRESTISSIMO 180
 
 // Articulation
-#define STACCATO 30
+#define STACCATO 20
 #define LEGATO 0
 
 #endif __HCINTERNALS
@@ -113,7 +113,7 @@ class hcYmzShield {
     void setChannels(uint8_t, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF);
     void setNote(uint8_t, uint8_t);
     void setTempo(uint8_t);
-    void setArticulation(uint8_t = 10);
+    void setArticulation(uint8_t = 8);
     uint8_t getTempo();
     void beat(uint8_t, float = 1.0);
   private:

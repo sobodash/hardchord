@@ -1,7 +1,7 @@
 /**
  * Staircase Demo
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.2
+ * Version 0.3.0
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -18,18 +18,15 @@
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("Ascending an 8-bit staricase");
 }
 
 
 void loop() {
-  Serial.println("Descending an 8-bit staricase");
-  
-  // This time we will screw with the envelope generator
-  PSG.setVolume(14);
-  
-  // Set up the envelope and noise
-  PSG.setEnvelopePeriod(0xc00);
-  PSG.setNoisePeriod(0x4);
+  // Initial setup
+  PSG.setVolume(0);
+  PSG.setEnvelopePeriod(0xa00);
+  PSG.setNoisePeriod(0x5);
   
   // Enable noise on Channel 0
   PSG.setNoise(0);
@@ -41,12 +38,13 @@ void loop() {
   PSG.startEnvelope(CONT | ATT);
   delay(1700);
   
-  // Tuin our noise and sound back off
+  // Tuin noise and sound back off
   PSG.setNoise(0, false);
   PSG.setEnvelope(0, false);
-  PSG.setVolume(0);
+
   PSG.mute();
   
   delay(3000);
 }
+
 
