@@ -62,74 +62,74 @@ static const uint16_t tpMidi[12] = {
  */
 #if defined(__ATmega168__)  || defined(__ATMEGA328__)
 void hcYmzShield::_shiftOut(uint8_t value) {
-  PORTD &= ~MASK_RCK;     // Latch
+  PORTD &= ~MASK_RCK; // Latch
   for(uint8_t i = 8; i; i--) {
-    PORTD &= ~MASK_SRCK;  // Clock
-    PORTD &= ~MASK_SER;   // Data
+    PORTD &= ~MASK_SRCK; // Clock
+    PORTD &= ~MASK_SER; // Data
     if(value & 0x80)
-      PORTD |=  MASK_SER; // Data
+      PORTD |= MASK_SER; // Data
     value <<= 1;
-    PORTD |=  MASK_SRCK;  // Clock
+    PORTD |= MASK_SRCK; // Clock
   }
-  PORTD |=  MASK_RCK;     // Latch
+  PORTD |= MASK_RCK; // Latch
 }
 void hcYmzShield::_busAddress() {
   PORTB &= ~MASK_SEL;
 }
 void hcYmzShield::_busData() {
-  PORTB |=  MASK_SEL;
+  PORTB |= MASK_SEL;
 }
 void hcYmzShield::_psgWrite() {
   PORTB &= ~B00010100; // MASK_CS1 | MASK_CS2
-  PORTB |=  B00010100; // MASK_CS1 | MASK_CS2
+  PORTB |= B00010100; // MASK_CS1 | MASK_CS2
 }
 void hcYmzShield::_psg0Write() {
   PORTB &= ~MASK_CS2;
-  PORTB |=  MASK_CS2;
+  PORTB |= MASK_CS2;
 }
 void hcYmzShield::_psg1Write() {
   PORTB &= ~MASK_CS1;
-  PORTB |=  MASK_CS1;
+  PORTB |= MASK_CS1;
 }
 void hcYmzShield::_debugLightOn() {
-  PORTB |=  B0010000;
+  PORTB |= B0010000;
 }
 void hcYmzShield::_debugLightOff() {
   PORTB &= ~B0010000;
 }
 #elif defined(__ATmega1280__) || defined(__ATmega2560__)
 void hcYmzShield::_shiftOut(uint8_t value) {
-  PORTE &= ~B00010000;     // Latch
+  PORTE &= ~B00010000; // Latch
   for(uint8_t i = 8; i; i--) {
-    PORTG &= ~B00100000;   // Clock
-    PORTE &= ~B00010000;   // Data
+    PORTG &= ~B00100000; // Clock
+    PORTE &= ~B00010000; // Data
     if(value & 0x80)
-      PORTE |=  B00010000; // Data
+      PORTE |= B00010000; // Data
     value <<= 1;
-    PORTG |=  B00100000;   // Clock
+    PORTG |= B00100000; // Clock
   }
-  PORTE |=  B00010000;     // Latch
+  PORTE |= B00010000; // Latch
 }
 void hcYmzShield::_busAddress() {
   PORTB &= ~B00100000;
 }
 void hcYmzShield::_busData() {
-  PORTB |=  B00100000;
+  PORTB |= B00100000;
 }
 void hcYmzShield::_psgWrite() {
   PORTB &= ~B01010000; // MASK_CS1 | MASK_CS2
-  PORTB |=  B01010000; // MASK_CS1 | MASK_CS2
+  PORTB |= B01010000; // MASK_CS1 | MASK_CS2
 }
 void hcYmzShield::_psg0Write() {
   PORTB &= ~B00010000;
-  PORTB |=  B00010000;
+  PORTB |= B00010000;
 }
 void hcYmzShield::_psg1Write() {
   PORTB &= ~B01000000;
-  PORTB |=  B01000000;
+  PORTB |= B01000000;
 }
 void hcYmzShield::_debugLightOn() {
-  PORTB |=  B1000000;
+  PORTB |= B1000000;
 }
 void hcYmzShield::_debugLightOff() {
   PORTB &= ~B1000000;
