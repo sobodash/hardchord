@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.h)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.3.0
+ * Version 0.4.0
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,6 +22,16 @@
 #else
 #include <WProgram.h>
 #endif
+
+// Uncomment this if you mod your board for SPI access. SPI Pinning is:
+// * CS1  = 2
+// * CS2  = 3
+// * SEL  = 8
+// * RCK  = 9
+// * SER  = 11
+// * SRCK = 13
+// Pin 10 must be kept free. Setting Pin 10 LOW will kill all SPI devices.
+#define __SPI_HACK
 
 // Envelope controls
 #define CONT B00001000
@@ -44,7 +54,6 @@
 #define PIN_CS1  10
 #define PIN_SEL  11
 #define PIN_CS2  12
-
 
 // These are used by all Hardchord shields
 #ifndef __HCINTERNALS
@@ -83,7 +92,6 @@
 #define LEGATO 0
 
 #endif __HCINTERNALS
-
 
 class hcYmzShield {
   public:
@@ -125,7 +133,7 @@ class hcYmzShield {
     void _setRegisterPsg(uint8_t, uint8_t);
     void _setRegisterPsg0(uint8_t, uint8_t);
     void _setRegisterPsg1(uint8_t, uint8_t);
-    inline static void _shiftOut(uint8_t);
+    inline uint8_t _shiftOut(uint8_t);
     inline static void _busAddress();
     inline static void _debugLightOn();
     inline static void _debugLightOff();

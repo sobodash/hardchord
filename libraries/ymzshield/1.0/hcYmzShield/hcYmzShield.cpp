@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.3.0
+ * Version 0.4.0
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -60,36 +60,66 @@ static const uint16_t tpMidi[12] = {
  * These static methods control data exchange with the YMZ284 chips and the
  * board's 75HC595 serial shifter.
  */
-#if defined(__ATmega168__)  || defined(__ATMEGA328__)
-void hcYmzShield::_shiftOut(uint8_t value) {
-  PORTD &= ~MASK_RCK;     // Latch
-  for(uint8_t i = 8; i; i--) {
-    PORTD &= ~MASK_SRCK;  // Clock
-    PORTD &= ~MASK_SER;   // Data
-    if(value & 0x80)
-      PORTD |=  MASK_SER; // Data
-    value <<= 1;
-    PORTD |=  MASK_SRCK;  // Clock
-  }
-  PORTD |=  MASK_RCK;     // Latch
+#if defined(__SPI_HACK)
+uint8_t hcYmzShield::_shiftOut(uint8_t value) {
+  PORTB &= ~B00000010;
+  SPDR = value;
+  while (!(SPSR & B10000000));
+  PORTB |=  B00000010;
+  return(SPDR);
 }
 void hcYmzShield::_busAddress() {
-  PORTB &= ~MASK_SEL;
+  PORTB &= ~B00000001;
 }
 void hcYmzShield::_busData() {
-  PORTB |=  MASK_SEL;
+  PORTB |=  B00000001;
 }
 void hcYmzShield::_psgWrite() {
-  PORTB &= ~B00010100; // MASK_CS1 | MASK_CS2
-  PORTB |=  B00010100; // MASK_CS1 | MASK_CS2
+  PORTD &= ~B00001100; // MASK_CS1 | MASK_CS2
+  PORTD |=  B00001100; // MASK_CS1 | MASK_CS2
 }
 void hcYmzShield::_psg0Write() {
-  PORTB &= ~MASK_CS2;
-  PORTB |=  MASK_CS2;
+  PORTD &= ~B00000100;
+  PORTD |=  B00000100;
 }
 void hcYmzShield::_psg1Write() {
-  PORTB &= ~MASK_CS1;
-  PORTB |=  MASK_CS1;
+  PORTD &= ~B00001000;
+  PORTD |=  B00001000;
+}
+void hcYmzShield::_debugLightOn() {
+}
+void hcYmzShield::_debugLightOff() {
+}
+#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega168A__) || defined(__AVR_ATmega168PA__)
+uint8_t hcYmzShield::_shiftOut(uint8_t value) {
+  PORTD &= ~B00001000;     // Latch
+  for(uint8_t i = 8; i; i--) {
+    PORTD &= ~B00010000;   // Clock
+    PORTD &= ~B00000100;   // Data
+    if(value & 0x80)
+      PORTD |=  B00000100; // Data
+    value <<= 1;
+    PORTD |=  B00010000;   // Clock
+  }
+  PORTD |=  B00001000;     // Latch
+}
+void hcYmzShield::_busAddress() {
+  PORTB &= ~B00001000;
+}
+void hcYmzShield::_busData() {
+  PORTB |=  B00001000;
+}
+void hcYmzShield::_psgWrite() {
+  PORTB &= ~B00010100;
+  PORTB |=  B00010100;
+}
+void hcYmzShield::_psg0Write() {
+  PORTB &= ~B00010000;
+  PORTB |=  B00010000;
+}
+void hcYmzShield::_psg1Write() {
+  PORTB &= ~B00000100;
+  PORTB |=  B00000100;
 }
 void hcYmzShield::_debugLightOn() {
   PORTB |=  B0010000;
@@ -97,8 +127,8 @@ void hcYmzShield::_debugLightOn() {
 void hcYmzShield::_debugLightOff() {
   PORTB &= ~B0010000;
 }
-#elif defined(__ATmega1280__) || defined(__ATmega2560__)
-void hcYmzShield::_shiftOut(uint8_t value) {
+#elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+uint8_t hcYmzShield::_shiftOut(uint8_t value) {
   PORTE &= ~B00010000;     // Latch
   for(uint8_t i = 8; i; i--) {
     PORTG &= ~B00100000;   // Clock
@@ -135,7 +165,7 @@ void hcYmzShield::_debugLightOff() {
   PORTB &= ~B1000000;
 }
 #else
-void hcYmzShield::_shiftOut(uint8_t value) {
+uint8_t hcYmzShield::_shiftOut(uint8_t value) {
   digitalWrite(PIN_RCK, LOW);
   shiftOut(PIN_SER, PIN_SRCK, MSBFIRST, value);
   digitalWrite(PIN_RCK, HIGH);
@@ -175,11 +205,19 @@ void hcYmzShield::_debugLightOff() {
  * Initializes the shield as an object.
  */
 hcYmzShield::hcYmzShield() {
-  #if defined(__ATmega168__)  || defined(__ATMEGA328__)
+  #if defined(__SPI_HACK)
+  DDRB  |= B00101111;
+  DDRD  |= B00001100;
+  PORTB &= ~B00101000;
+  PORTB |= B00000110;
+  PORTD |= B00001100;
+  SPCR |= B01010000;
+  SPSR |= B00000001;
+  #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega168A__) || defined(__AVR_ATmega168PA__)
   DDRB  |= B00111100; // LED | MASK_CS1 | MASK_SEL | MASK_CS2
   DDRD  |= B00011100; // MASK_SER | MASK_RCK | MASK_SRCK
   PORTB |= B00010100; // MASK_CS1 | MASK_CS2
-  #elif defined(__ATmega1280__) || defined(__ATmega2560__)
+  #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   DDRB  |= B11110000; // LED | CS1 | SEL | CS2
   DDRE  |= B00110000; // SER | RCK
   DDRG  |= B00100000; // SRCK
