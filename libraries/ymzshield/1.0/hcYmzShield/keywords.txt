@@ -39,6 +39,7 @@ setTempo	KEYWORD2
 getTempo	KEYWORD2
 beat	KEYWORD2
 setArticulation	KEYWORD2
+playBlock	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

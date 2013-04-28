@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.h)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.4.0
+ * Version 0.4.1
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -124,6 +124,7 @@ class hcYmzShield {
     void setArticulation(uint8_t = 8);
     uint8_t getTempo();
     void beat(uint8_t, float = 1.0);
+    void playBlock(uint8_t*);
   private:
     uint8_t _psg0Registers[0x0d];
     uint8_t _psg1Registers[0x0d];
@@ -133,7 +134,7 @@ class hcYmzShield {
     void _setRegisterPsg(uint8_t, uint8_t);
     void _setRegisterPsg0(uint8_t, uint8_t);
     void _setRegisterPsg1(uint8_t, uint8_t);
-    inline uint8_t _shiftOut(uint8_t);
+    inline static void _shiftOut(uint8_t);
     inline static void _busAddress();
     inline static void _debugLightOn();
     inline static void _debugLightOff();

@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.4.0
+ * Version 0.4.1
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -61,12 +61,12 @@ static const uint16_t tpMidi[12] = {
  * board's 75HC595 serial shifter.
  */
 #if defined(__SPI_HACK)
-uint8_t hcYmzShield::_shiftOut(uint8_t value) {
+void hcYmzShield::_shiftOut(uint8_t value) {
   PORTB &= ~B00000010;
   SPDR = value;
   while (!(SPSR & B10000000));
   PORTB |=  B00000010;
-  return(SPDR);
+  uint8_t c = SPDR;
 }
 void hcYmzShield::_busAddress() {
   PORTB &= ~B00000001;
@@ -91,7 +91,7 @@ void hcYmzShield::_debugLightOn() {
 void hcYmzShield::_debugLightOff() {
 }
 #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega168A__) || defined(__AVR_ATmega168PA__)
-uint8_t hcYmzShield::_shiftOut(uint8_t value) {
+void hcYmzShield::_shiftOut(uint8_t value) {
   PORTD &= ~B00001000;     // Latch
   for(uint8_t i = 8; i; i--) {
     PORTD &= ~B00010000;   // Clock
@@ -128,7 +128,7 @@ void hcYmzShield::_debugLightOff() {
   PORTB &= ~B0010000;
 }
 #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-uint8_t hcYmzShield::_shiftOut(uint8_t value) {
+void hcYmzShield::_shiftOut(uint8_t value) {
   PORTE &= ~B00010000;     // Latch
   for(uint8_t i = 8; i; i--) {
     PORTG &= ~B00100000;   // Clock
@@ -165,7 +165,7 @@ void hcYmzShield::_debugLightOff() {
   PORTB &= ~B1000000;
 }
 #else
-uint8_t hcYmzShield::_shiftOut(uint8_t value) {
+void hcYmzShield::_shiftOut(uint8_t value) {
   digitalWrite(PIN_RCK, LOW);
   shiftOut(PIN_SER, PIN_SRCK, MSBFIRST, value);
   digitalWrite(PIN_RCK, HIGH);
@@ -745,3 +745,128 @@ void hcYmzShield::beat(uint8_t beat, float dot) {
 }
 
 
+
+/**
+ * public hcYmzShield::playBlock()
+ * 
+ * Plays a Hardchord Music block that has been encoded and stored as a byte
+ * array. This can be an efficient way to store very large amounts of music
+ * data in a single project.
+ * 
+ * You should be aware that shorter songs will not benefit from this function.
+ * A longer song that compiled to 24KB may fit within 10KB when using converted
+ * for playBlock(). However, something like the short Duck Hunt demo becomes
+ * 1KB larger due to this function's overhead.
+ * 
+ * You should carefully weigh the benefits of using this function in any
+ * programs that have severe space constraints.
+ */
+void hcYmzShield::playBlock(uint8_t *song) {
+  uint32_t position;
+  uint8_t command;
+  if(song[0] == 0x48 && song[1] == 0x43) {
+    if(song[2] < 2) { // Support <= Revision 1
+      command = song[3];
+      position = 4;
+      while(command != 0) {
+        switch(command) {
+          // Set volume on all channels
+          case 0x50:
+            this->setVolume(song[position]);
+            position++;
+            break;
+          // Set volume on one channel
+          case 0x51:
+            this->setVolume(song[position], song[position+1]);
+            position += 2;
+            break;
+          // Set tempo
+          case 0x52:
+            this->setTempo(song[position]);
+            position++;
+            break;
+          // Set articulation
+          case 0x53:
+            this->setArticulation(song[position]);
+            position++;
+            break;
+          
+          // Mute all channels
+          case 0x60:
+            this->mute();
+            break;
+          // Toggle tone on channel
+          case 0x61:
+            this->setTone(song[position], !!song[position+1]);
+            position += 2;
+            break;
+          // Toggle noise on channel
+          case 0x62:
+            this->setNoise(song[position], !!song[position+1]);
+            position += 2;
+            break;
+          // Toggle envelope on channel
+          case 0x63:
+            this->setEnvelope(song[position], !!song[position+1]);
+            position += 2;
+            break;
+          
+          // Start envelope generator with ADSR envelope
+          case 0x70:
+            this->startEnvelope(song[position]);
+            position++;
+            break;
+          // Restart current ADSR envelope
+          case 0x71:
+            this->restartEnvelope();
+            break;
+          // Set envelope period
+          case 0x73:
+            this->setEnvelopePeriod((song[position] << 8) + song[position+1]);
+            position += 2;
+            break;
+          
+          // Set tone period
+          case 0x80:
+            this->setTonePeriod(song[position], (song[position+1] << 8) + song[position+2]);
+            position += 3;
+            break;
+          // Set tone MIDI
+          case 0x81:
+            this->setToneMidi(song[position], song[position+1]);
+            position += 2;
+            break;
+          // Set note
+          case 0x82:
+            this->setNote(song[position], song[position+1]);
+            position += 2;
+            break;
+          // Set channels
+          case 0x83:
+            this->setChannels(song[position], song[position+1], song[position+2], song[position+3], song[position+4], song[position+5]);
+            position += 6;
+            break;
+          
+          // Set noise period
+          case 0x90:
+            this->setNoisePeriod(song[position]);
+            position++;
+            break;
+          
+          // Pause for a beat
+          case 0xa0:
+            this->beat(song[position], float(song[position+1])/8);
+            position += 2;
+            break;
+          // Delay
+          case 0xa1:
+            delay((song[position] << 8) + song[position+1]);
+            position += 2;
+            break;
+        }
+        command = song[position];
+        position++;
+      }
+    }
+  }
+}
