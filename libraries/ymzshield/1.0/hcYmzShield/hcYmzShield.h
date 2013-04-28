@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.h)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.4.1
+ * Version 0.4.2
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,7 +31,7 @@
 // * SER  = 11
 // * SRCK = 13
 // Pin 10 must be kept free. Setting Pin 10 LOW will kill all SPI devices.
-#define __SPI_HACK
+//#define __SPI_HACK
 
 // Envelope controls
 #define CONT B00001000
@@ -64,9 +64,9 @@
 #define OFF  255
 
 // Used for dotted notes
-#define DOT 1.5
-#define DOUBLEDOT 1.75
-#define TRIPLEDOT 1.875
+#define DOT 12
+#define DOUBLEDOT 13
+#define TRIPLEDOT 14
 
 // Tempo
 #define LARGHISSIMO 16
@@ -109,28 +109,23 @@ class hcYmzShield {
     void setEnvelopeFrequency(float);
     void startEnvelope(uint8_t);
     void restartEnvelope();
-    void setTone(uint8_t, bool = true);
+    void setTone(uint8_t, bool);
     bool isTone(uint8_t);
-    void setNoise(uint8_t, bool = true);
+    void setNoise(uint8_t, bool);
     bool isNoise(uint8_t);
-    void setEnvelope(uint8_t, bool = true);
+    void setEnvelope(uint8_t, bool);
     bool isEnvelope(uint8_t);
     void setVolume(uint8_t, uint8_t);
     void setVolume(uint8_t);
     uint8_t getVolume(uint8_t);
-    void setChannels(uint8_t, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF, uint8_t = OFF);
+    void setChannels(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
     void setNote(uint8_t, uint8_t);
     void setTempo(uint8_t);
-    void setArticulation(uint8_t = 8);
+    void setArticulation(uint8_t);
     uint8_t getTempo();
-    void beat(uint8_t, float = 1.0);
+    void beat(uint8_t, uint8_t);
     void playBlock(uint8_t*);
   private:
-    uint8_t _psg0Registers[0x0d];
-    uint8_t _psg1Registers[0x0d];
-    uint8_t _tone;
-    uint8_t _bpm;
-    uint8_t _articulation;
     void _setRegisterPsg(uint8_t, uint8_t);
     void _setRegisterPsg0(uint8_t, uint8_t);
     void _setRegisterPsg1(uint8_t, uint8_t);
@@ -142,6 +137,12 @@ class hcYmzShield {
     inline static void _psgWrite();
     inline static void _psg0Write();
     inline static void _psg1Write();
+  protected:
+    uint8_t _psg0Registers[0x0d];
+    uint8_t _psg1Registers[0x0d];
+    uint8_t _tone;
+    uint8_t _bpm;
+    uint8_t _articulation;
 };
 
 extern hcYmzShield PSG;
