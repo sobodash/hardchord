@@ -24,14 +24,14 @@
 #endif
 
 // Uncomment this if you mod your board for SPI access. SPI Pinning is:
-// * CS1  = 2
-// * CS2  = 3
-// * SEL  = 8
-// * RCK  = 9
-// * SER  = 11
-// * SRCK = 13
+// * CS1  (YMZ284#1 PIN  1)  = 2
+// * CS2  (YMZ284#2 PIN  2)  = 3
+// * SEL  (YMZ284#2 PIN  3)  = 8
+// * RCK  (74HC595  PIN 12)  = 9
+// * SER  (74HC595  PIN 14) = 11
+// * SRCK (74HC595  PIN 11) = 13
 // Pin 10 must be kept free. Setting Pin 10 LOW will kill all SPI devices.
-#define __SPI_HACK
+//#define __SPI_HACK
 
 // Envelope controls
 #define CONT B00001000
