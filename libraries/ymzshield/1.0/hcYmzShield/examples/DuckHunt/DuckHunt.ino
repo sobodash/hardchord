@@ -1,7 +1,7 @@
 /**
  * Duck Hunt Demo (Title Screen)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.3.0
+ * Version 0.3.5
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,35 +23,35 @@ void setup() {
 
 
 void loop() {
-  PSG.setVolume(0, 13); // Enable Channels 0-2
-  PSG.setVolume(1, 13);
-  PSG.setVolume(2, 13);
+  YMZ.setVolume(0, 13); // Enable Channels 0-2
+  YMZ.setVolume(1, 13);
+  YMZ.setVolume(2, 13);
 
-  PSG.setTempo(110);    // 110bpm, key of Ab Minor
+  YMZ.setTempo(110);    // 110bpm, key of Ab Minor
   
   // Measure 1
-  PSG.setChannels(68, 65);        PSG.beat(16);
-  PSG.setChannels(68, 65);        PSG.beat(16);
-  PSG.setChannels(67, 64);        PSG.beat(8);
-  PSG.setChannels(66, 63);        PSG.beat(8);
-  PSG.setChannels(65, 62);        PSG.beat(8);
-  PSG.setChannels(64, 55, 48);    PSG.beat(8, DOT);
-  PSG.setChannels(65, 56, 49);    PSG.beat(8);
-  PSG.setChannels(OFF, OFF, OFF); PSG.beat(8, DOT); // Rest
+  YMZ.setChannels(68, 65);        YMZ.beat(16);
+  YMZ.setChannels(68, 65);        YMZ.beat(16);
+  YMZ.setChannels(67, 64);        YMZ.beat(8);
+  YMZ.setChannels(66, 63);        YMZ.beat(8);
+  YMZ.setChannels(65, 62);        YMZ.beat(8);
+  YMZ.setChannels(64, 55, 48);    YMZ.beat(8, DOT);
+  YMZ.setChannels(65, 56, 49);    YMZ.beat(8);
+  YMZ.setChannels(OFF, OFF, OFF); YMZ.beat(8, DOT); // Rest
   
   // Measure 2
-  PSG.setChannels(77, 68);        PSG.beat(16);
-  PSG.setChannels(73, 65, 68);    PSG.beat(16);
-  PSG.setChannels(68, 61, 65);    PSG.beat(16);
-  PSG.setChannels(68, 60, 63);    PSG.beat(16);
-  PSG.setChannels(67, 59, 62);    PSG.beat(16);
-  PSG.setChannels(66, 58, 61);    PSG.beat(16);
-  PSG.setChannels(65, 56, 60);    PSG.beat(16);
-  PSG.setChannels(64, 55, 48);    PSG.beat(8, DOT);
-  PSG.setChannels(65, 56, 49);    PSG.beat(8);
-  PSG.setChannels(OFF, OFF, OFF); PSG.beat(8, DOT); // Rest
+  YMZ.setChannels(77, 68);        YMZ.beat(16);
+  YMZ.setChannels(73, 65, 68);    YMZ.beat(16);
+  YMZ.setChannels(68, 61, 65);    YMZ.beat(16);
+  YMZ.setChannels(68, 60, 63);    YMZ.beat(16);
+  YMZ.setChannels(67, 59, 62);    YMZ.beat(16);
+  YMZ.setChannels(66, 58, 61);    YMZ.beat(16);
+  YMZ.setChannels(65, 56, 60);    YMZ.beat(16);
+  YMZ.setChannels(64, 55, 48);    YMZ.beat(8, DOT);
+  YMZ.setChannels(65, 56, 49);    YMZ.beat(8);
+  YMZ.setChannels(OFF, OFF, OFF); YMZ.beat(8, DOT); // Rest
   
-  PSG.mute();
+  YMZ.mute();
   
   delay(3000);
 }

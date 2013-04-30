@@ -6,7 +6,7 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-PSG	KEYWORD1
+YMZ	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

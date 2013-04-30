@@ -1,7 +1,7 @@
 /**
  * Gunshots Demo
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.3.0
+ * Version 0.3.5
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,27 +24,27 @@ void setup() {
 
 void loop() {
   // Initial state
-  PSG.setVolume(0);
-  PSG.setEnvelopePeriod(0xfa0);
-  PSG.setNoisePeriod(15);
+  YMZ.setVolume(0);
+  YMZ.setEnvelopePeriod(0xfa0);
+  YMZ.setNoisePeriod(15);
   
   // Enable noise on Channel 0
-  PSG.setNoise(0);
+  YMZ.setNoise(0);
   
   // Enable envelope on Channel 0
-  PSG.setEnvelope(0);
+  YMZ.setEnvelope(0);
   
   // Restart the envelope on each loop since the beginning is what makes
   // the gunshot sound.
   for(uint8_t bullets = 0; bullets < 12; bullets++) {
-    PSG.startEnvelope(CONT);
+    YMZ.startEnvelope(CONT);
     delay(80);
   }
   
   // Turn the noise and envelope back off
-  PSG.setNoise(0, false);
-  PSG.setEnvelope(0, false);
-  PSG.mute();
+  YMZ.setNoise(0, false);
+  YMZ.setEnvelope(0, false);
+  YMZ.mute();
   
   delay(3000);
 }

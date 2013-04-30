@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.4.2
+ * Version 0.4.3
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -17,7 +17,7 @@
 
 
 // Create the handle to the shield.
-hcYmzShield PSG;
+hcYmzShield YMZ;
 
 
 // Base tone periods for the first 12 MIDI notes at 4MHz
@@ -507,7 +507,7 @@ void hcYmzShield::restartEnvelope() {
  * 
  * Enables or disables tone output on a channel.
  */
-void hcYmzShield::setTone(uint8_t channel, bool isEnabled = true) {
+void hcYmzShield::setTone(uint8_t channel, bool isEnabled) {
   if(channel > 2)
     _setRegisterPsg1(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << (channel - 3)) : _psg1Registers[0x07] | (1 << (channel - 3))) & 0x3f);
   else
@@ -533,7 +533,7 @@ bool hcYmzShield::isTone(uint8_t channel) {
  * 
  * Enables or disables noise output on a channel.
  */
-void hcYmzShield::setNoise(uint8_t channel, bool isEnabled = true) {
+void hcYmzShield::setNoise(uint8_t channel, bool isEnabled) {
   if(channel > 2)
     _setRegisterPsg1(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << channel) : _psg1Registers[0x07] | (1 << channel)) & 0x3f);
   else
@@ -560,8 +560,8 @@ bool hcYmzShield::isNoise(uint8_t channel) {
  * Toggle sound channels off.
  */
 void hcYmzShield::mute() {
-  _tone = 0;
-  _setRegisterPsg(0x07, B10111111);
+  _tone = B00111111;
+  _setRegisterPsg(0x07, B00111111);
 }
 
 
@@ -570,8 +570,11 @@ void hcYmzShield::mute() {
  * 
  * Adjust the value of each channel.
  */
-void hcYmzShield::setVolume(uint8_t channel, uint8_t volume) {
+void hcYmzShield::setVolume(uint8_t channel, uint8_t volume, bool fakeMute) {
   volume &= 0xf; // Sanitize
+  if(!fakeMute)
+    _volume[channel] = volume;
+  
   if(channel > 2)
     _setRegisterPsg1(0x08 + (channel - 3), volume + (_psg1Registers[0x08] & 0x10));
   else
@@ -608,7 +611,7 @@ void hcYmzShield::setVolume(uint8_t volume) {
  * 
  * Enables or disables mixing a channel through the envelope generator.
  */
-void hcYmzShield::setEnvelope(uint8_t channel, bool isEnabled = true) {
+void hcYmzShield::setEnvelope(uint8_t channel, bool isEnabled) {
   uint8_t data;
   if(channel > 2) {
     data = (isEnabled ? _psg1Registers[0x08] | 0x10 : _psg1Registers[0x08] & ~0x10);
@@ -642,7 +645,7 @@ bool hcYmzShield::isEnvelope(uint8_t channel) {
  * 
  * We will *NOT* waste clock cycles here to sanitize input.
  */
-void hcYmzShield::setChannels(uint8_t c0 = OFF, uint8_t c1 = OFF, uint8_t c2 = OFF, uint8_t c3 = OFF, uint8_t c4 = OFF, uint8_t c5 = OFF) {
+void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5) {
   uint8_t channel[6] = {c0, c1, c2, c3, c4, c5};
   uint8_t i, state = 0;
 
@@ -650,25 +653,30 @@ void hcYmzShield::setChannels(uint8_t c0 = OFF, uint8_t c1 = OFF, uint8_t c2 = O
   for(i = 0; i < 6; i++) {
     if(channel[i] != SKIP)
       state |= (1 << i);
-    if(channel[i] == OFF)
-      _tone &= ~(1 << i);
-    else if(channel[i] < 128)
+    if(channel[i] == OFF) {
       _tone |= (1 << i);
+      setVolume(i, 0, true);
+    }
+    else if(channel[i] < 128)
+      _tone &= ~(1 << i);
   }
   
-  _setRegisterPsg0(0x07, _psg0Registers[0x07] | (state & B00000111));
-  _setRegisterPsg1(0x07, _psg1Registers[0x07] | (state >> 3));
-
-  // Now set the new notes
-  for(i = 0; i < 6; i++)
-    if(channel[i] != OFF && channel[i] != SKIP)
-      setToneMidi(i, channel[i]);
+  _setRegisterPsg0(0x07, (_psg0Registers[0x07] & ~B00000111) | (state & B00000111));
+  _setRegisterPsg1(0x07, (_psg1Registers[0x07] & ~B00000111) | (state >> 3));
   
   // Pause for articulation
   delay(_articulation);
   
-  _setRegisterPsg0(0x07, _psg0Registers[0x07] & ~(_tone & B00000111));
-  _setRegisterPsg1(0x07, _psg1Registers[0x07] & ~(_tone >> 3));
+  // Now set the new notes
+  for(i = 0; i < 6; i++) {
+    if(channel[i] != OFF && channel[i] != SKIP) {
+      setToneMidi(i, channel[i]);
+      setVolume(i, _volume[i]);
+    }
+  }
+  
+  _setRegisterPsg0(0x07, (_psg0Registers[0x07] & ~B00000111) | (_tone & B00000111));
+  _setRegisterPsg1(0x07, (_psg1Registers[0x07] & ~B00000111) | (_tone >> 3));
 
 }
 
@@ -722,7 +730,7 @@ uint8_t hcYmzShield::getTempo() {
  * Set the articulation between notes to STACCATO or LEGATO. Call it with no
  * parameters to return to default spacing.
  */
-void hcYmzShield::setArticulation(uint8_t tonguing = 8) {
+void hcYmzShield::setArticulation(uint8_t tonguing) {
   _articulation = tonguing;
 }
 
@@ -739,9 +747,9 @@ void hcYmzShield::setArticulation(uint8_t tonguing = 8) {
  *
  * There are 60,000 milliseconds per minute.
  */
-void hcYmzShield::beat(uint8_t beat, uint8_t dot = 1) {
+void hcYmzShield::beat(uint8_t beat, uint8_t dot) {
   // Subtract articulation to keep beat count
-  delay((((60000/_bpm) * 4)/beat) * float(dot/8) - _articulation);
+  delay((((60000/_bpm) * 4)/beat) * (float(dot)/8) - _articulation);
 }
 
 
@@ -761,34 +769,34 @@ void hcYmzShield::beat(uint8_t beat, uint8_t dot = 1) {
  * You should carefully weigh the benefits of using this function in any
  * programs that have severe space constraints.
  */
-void hcYmzShield::playBlock(uint8_t *song) {
-  uint32_t position;
+void hcYmzShield::playBlock(const uint8_t *song) {
+  uint32_t i;
   uint8_t command;
-  if(song[0] == 0x48 && song[1] == 0x43) {
+  if(pgm_read_byte(song) == 0x48 && pgm_read_byte(song + 1) == 0x43) {
     if(song[2] < 2) { // Support <= Revision 1
-      command = song[3];
-      position = 4;
+      command = pgm_read_byte(song + 3);
+      i = 4;
       while(command != 0) {
         switch(command) {
           // Set volume on all channels
           case 0x50:
-            setVolume(song[position]);
-            position++;
+            setVolume(pgm_read_byte(song + i));
+            i++;
             break;
           // Set volume on one channel
           case 0x51:
-            setVolume(song[position], song[position+1]);
-            position += 2;
+            setVolume(pgm_read_byte(song + i), pgm_read_byte(song + i + 1));
+            i += 2;
             break;
           // Set tempo
           case 0x52:
-            setTempo(song[position]);
-            position++;
+            setTempo(pgm_read_byte(song + i));
+            i++;
             break;
           // Set articulation
           case 0x53:
-            setArticulation(song[position]);
-            position++;
+            setArticulation(pgm_read_byte(song + i));
+            i++;
             break;
           
           // Mute all channels
@@ -797,24 +805,24 @@ void hcYmzShield::playBlock(uint8_t *song) {
             break;
           // Toggle tone on channel
           case 0x61:
-            setTone(song[position], !!song[position+1]);
-            position += 2;
+            setTone(pgm_read_byte(song + i), !!pgm_read_byte(song + i + 1));
+            i += 2;
             break;
           // Toggle noise on channel
           case 0x62:
-            setNoise(song[position], !!song[position+1]);
-            position += 2;
+            setNoise(pgm_read_byte(song + i), !!pgm_read_byte(song + i + 1));
+            i += 2;
             break;
           // Toggle envelope on channel
           case 0x63:
-            setEnvelope(song[position], !!song[position+1]);
-            position += 2;
+            setEnvelope(pgm_read_byte(song + i), !!pgm_read_byte(song + i + 1));
+            i += 2;
             break;
           
           // Start envelope generator with ADSR envelope
           case 0x70:
-            startEnvelope(song[position]);
-            position++;
+            startEnvelope(pgm_read_byte(song + i));
+            i++;
             break;
           // Restart current ADSR envelope
           case 0x71:
@@ -822,50 +830,50 @@ void hcYmzShield::playBlock(uint8_t *song) {
             break;
           // Set envelope period
           case 0x73:
-            setEnvelopePeriod((song[position] << 8) + song[position+1]);
-            position += 2;
+            setEnvelopePeriod((pgm_read_byte(song + i) << 8) + pgm_read_byte(song + i + 1));
+            i += 2;
             break;
           
           // Set tone period
           case 0x80:
-            setTonePeriod(song[position], (song[position+1] << 8) + song[position+2]);
-            position += 3;
+            setTonePeriod(pgm_read_byte(song + i), (pgm_read_byte(song + i + 1) << 8) + pgm_read_byte(song + i + 2));
+            i += 3;
             break;
           // Set tone MIDI
           case 0x81:
-            setToneMidi(song[position], song[position+1]);
-            position += 2;
+            setToneMidi(pgm_read_byte(song + i), pgm_read_byte(song + i + 1));
+            i += 2;
             break;
           // Set note
           case 0x82:
-            setNote(song[position], song[position+1]);
-            position += 2;
+            setNote(pgm_read_byte(song + i), pgm_read_byte(song + i + 1));
+            i += 2;
             break;
           // Set channels
           case 0x83:
-            setChannels(song[position], song[position+1], song[position+2], song[position+3], song[position+4], song[position+5]);
-            position += 6;
+            setChannels(pgm_read_byte(song + i), pgm_read_byte(song + i + 1), pgm_read_byte(song + i + 2), pgm_read_byte(song + i + 3), pgm_read_byte(song + i + 4), pgm_read_byte(song + i + 5));
+            i += 6;
             break;
           
           // Set noise period
           case 0x90:
-            setNoisePeriod(song[position]);
-            position++;
+            setNoisePeriod(pgm_read_byte(song + i));
+            i++;
             break;
           
           // Pause for a beat
           case 0xa0:
-            beat(song[position], song[position+1]);
-            position += 2;
+            beat(pgm_read_byte(song + i), pgm_read_byte(song + i + 1));
+            i += 2;
             break;
           // Delay
           case 0xa1:
-            delay((song[position] << 8) + song[position+1]);
-            position += 2;
+            delay((pgm_read_byte(song + i) << 8) + pgm_read_byte(song + i + 1));
+            i += 2;
             break;
         }
-        command = song[position];
-        position++;
+        command = pgm_read_byte(song + i);
+        i++;
       }
     }
   }
