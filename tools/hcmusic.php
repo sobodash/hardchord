@@ -114,7 +114,8 @@ function delay($length) {
 
 
 $title = basename($argv[$argc-1]);
-$title = substr($title, 0, strpos($title, "."));
+if(strpos($title, "."))
+  $title = substr($title, 0, strpos($title, "."));
 $code = "<?php\n" . str_replace("YMZ.", "", file_get_contents($argv[$argc-1])) . "\n?>";
 file_put_contents("temp0000.php", $code);
 include("temp0000.php");
