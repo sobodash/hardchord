@@ -1,7 +1,7 @@
 /**
  * Hardchord YMZ Shield 1.0 (hcYmzShield.cpp)
  * Derrick Sobodash <derrick@sobodash.com>
- * Version 0.4.3
+ * Version 0.5.0
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,30 +21,30 @@ hcYmzShield YMZ;
 
 
 // Base tone periods for the first 12 MIDI notes at 4MHz
-#ifdef __FAVOR_PRECISION
+#ifdef YMZ_PRECISION
 static const uint16_t tpMidi[128] = {
-      0,     0,     0,     0,     0,     0, // Octave -1
-      0,     0,     0,     0,     0,     0,
-      0,     0,     0,     0,     0,     0, // Octave 0
-      0,     0,     0,     0,     0,     0,
-   3822,  3608,  3405,  3214,  3034,  2863, // Octave 1
-   2703,  2551,  2408,  2273,  2145,  2025,
-   1911,  1804,  1703,  1607,  1517,  1432, // Octave 2
-   1351,  1276,  1204,  1136,  1073,  1012,
-    956,   902,   851,   804,   758,   716, // Octave 3
-    676,   638,   602,   568,   536,   506,
-    478,   451,   426,   402,   379,   358, // Octave 4
-    338,   319,   301,   284,   268,   253,
-    239,   225,   213,   201,   190,   179, // Octave 5
-    169,   159,   150,   142,   134,   127,
-    119,   113,   106,   100,    95,    89, // Octave 6
-     84,    80,    75,    71,    67,    63,
-     60,    56,    53,    50,    47,    45, // Octave 7
-     42,    40,    38,    36,    34,    32,
-     30,     0,     0,     0,     0,     0, // Octave 8
-      0,     0,     0,     0,     0,     0,
-      0,     0,     0,     0,     0,     0, // Octave 9
-      0,     0
+     0,     0,     0,     0,     0,     0, // Octave -1
+     0,     0,     0,     0,     0,     0,
+     0,     0,     0,     0,     0,     0, // Octave 0
+     0,     0,     0,     0,     0,     0,
+  3822,  3608,  3405,  3214,  3034,  2863, // Octave 1
+  2703,  2551,  2408,  2273,  2145,  2025,
+  1911,  1804,  1703,  1607,  1517,  1432, // Octave 2
+  1351,  1276,  1204,  1136,  1073,  1012,
+   956,   902,   851,   804,   758,   716, // Octave 3
+   676,   638,   602,   568,   536,   506,
+   478,   451,   426,   402,   379,   358, // Octave 4
+   338,   319,   301,   284,   268,   253,
+   239,   225,   213,   201,   190,   179, // Octave 5
+   169,   159,   150,   142,   134,   127,
+   119,   113,   106,   100,    95,    89, // Octave 6
+    84,    80,    75,    71,    67,    63,
+    60,    56,    53,    50,    47,    45, // Octave 7
+    42,    40,    38,    36,    34,    32,
+    30,     0,     0,     0,     0,     0, // Octave 8
+     0,     0,     0,     0,     0,     0,
+     0,     0,     0,     0,     0,     0, // Octave 9
+     0,     0
 };
 #else
 static const uint16_t tpMidi[12] = {
@@ -55,147 +55,86 @@ static const uint16_t tpMidi[12] = {
 
 
 /**
- * Helper Methods
+ * AVR Helper Methods
  * 
  * These static methods control data exchange with the YMZ284 chips and the
  * board's 75HC595 serial shifter.
  */
-#if defined(__SPI_HACK)
-void hcYmzShield::_shiftOut(uint8_t value) {
-  PORTB &= ~B00000010;
-  SPDR = value;
-  while (!(SPSR & B10000000));
-  PORTB |=  B00000010;
-  uint8_t c = SPDR;
-}
-void hcYmzShield::_busAddress() {
-  PORTB &= ~B00000001;
-}
-void hcYmzShield::_busData() {
-  PORTB |=  B00000001;
-}
-void hcYmzShield::_psgWrite() {
-  PORTD &= ~B00001100; // MASK_CS1 | MASK_CS2
-  PORTD |=  B00001100; // MASK_CS1 | MASK_CS2
-}
-void hcYmzShield::_psg0Write() {
-  PORTD &= ~B00000100;
-  PORTD |=  B00000100;
-}
-void hcYmzShield::_psg1Write() {
-  PORTD &= ~B00001000;
-  PORTD |=  B00001000;
-}
-void hcYmzShield::_debugLightOn() {
-}
-void hcYmzShield::_debugLightOff() {
-}
-#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega168A__) || defined(__AVR_ATmega168PA__)
-void hcYmzShield::_shiftOut(uint8_t value) {
-  PORTD &= ~B00001000;     // Latch
-  for(uint8_t i = 8; i; i--) {
-    PORTD &= ~B00010000;   // Clock
-    PORTD &= ~B00000100;   // Data
-    if(value & 0x80)
-      PORTD |=  B00000100; // Data
-    value <<= 1;
-    PORTD |=  B00010000;   // Clock
+#ifndef YMZ_FALLBACK
+  #if YMZ_VERSION >= 200
+  inline void hcYmzShield::_shiftOut(uint8_t value) {
+    YMZ_RCK_PORT &= ~YMZ_RCK;
+    SPDR = value;
+    while (!(SPSR & 0x80));
+    YMZ_RCK_PORT |=  YMZ_RCK;
+    SPDR; // Clear the register
   }
-  PORTD |=  B00001000;     // Latch
-}
-void hcYmzShield::_busAddress() {
-  PORTB &= ~B00001000;
-}
-void hcYmzShield::_busData() {
-  PORTB |=  B00001000;
-}
-void hcYmzShield::_psgWrite() {
-  PORTB &= ~B00010100;
-  PORTB |=  B00010100;
-}
-void hcYmzShield::_psg0Write() {
-  PORTB &= ~B00010000;
-  PORTB |=  B00010000;
-}
-void hcYmzShield::_psg1Write() {
-  PORTB &= ~B00000100;
-  PORTB |=  B00000100;
-}
-void hcYmzShield::_debugLightOn() {
-  PORTB |=  B0010000;
-}
-void hcYmzShield::_debugLightOff() {
-  PORTB &= ~B0010000;
-}
-#elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-void hcYmzShield::_shiftOut(uint8_t value) {
-  PORTE &= ~B00010000;     // Latch
-  for(uint8_t i = 8; i; i--) {
-    PORTG &= ~B00100000;   // Clock
-    PORTE &= ~B00010000;   // Data
-    if(value & 0x80)
-      PORTE |=  B00010000; // Data
-    value <<= 1;
-    PORTG |=  B00100000;   // Clock
+  #else
+  inline void hcYmzShield::_shiftOut(uint8_t value) {
+    YMZ_RCK_PORT &= ~YMZ_RCK;
+    for(uint8_t i = 8; i; i--) {
+      YMZ_SRCK_PORT &= ~YMZ_SRCK;
+      YMZ_SER_PORT  &= ~YMZ_SER;
+      if(value & 0x80)
+        YMZ_SER_PORT |= YMZ_SER;
+      value <<= 1;
+      YMZ_SRCK_PORT |=  YMZ_SRCK;
+    }
+    YMZ_RCK_PORT |=  YMZ_RCK;
   }
-  PORTE |=  B00010000;     // Latch
-}
-void hcYmzShield::_busAddress() {
-  PORTB &= ~B00100000;
-}
-void hcYmzShield::_busData() {
-  PORTB |=  B00100000;
-}
-void hcYmzShield::_psgWrite() {
-  PORTB &= ~B01010000; // MASK_CS1 | MASK_CS2
-  PORTB |=  B01010000; // MASK_CS1 | MASK_CS2
-}
-void hcYmzShield::_psg0Write() {
-  PORTB &= ~B00010000;
-  PORTB |=  B00010000;
-}
-void hcYmzShield::_psg1Write() {
-  PORTB &= ~B01000000;
-  PORTB |=  B01000000;
-}
-void hcYmzShield::_debugLightOn() {
-  PORTB |=  B1000000;
-}
-void hcYmzShield::_debugLightOff() {
-  PORTB &= ~B1000000;
-}
+  #endif
+  inline void hcYmzShield::_busAddress() {
+    YMZ_SEL_PORT &= ~YMZ_SEL;
+  }
+  inline void hcYmzShield::_busData() {
+    YMZ_SEL_PORT |=  YMZ_SEL;
+  }
+  inline void hcYmzShield::_psg0Write() {
+    YMZ_CS1_PORT &= ~YMZ_CS1;
+    YMZ_CS1_PORT |=  YMZ_CS1;
+  }
+  inline void hcYmzShield::_psg1Write() {
+    YMZ_CS2_PORT &= ~YMZ_CS2;
+    YMZ_CS2_PORT |=  YMZ_CS1;
+  }
+
+
+/**
+ * Arduino Helper Methods
+ * 
+ * The above functions are written here using the standard Arduino library as
+ * a fallback for future boards.
+ */
 #else
-void hcYmzShield::_shiftOut(uint8_t value) {
-  digitalWrite(PIN_RCK, LOW);
-  shiftOut(PIN_SER, PIN_SRCK, MSBFIRST, value);
-  digitalWrite(PIN_RCK, HIGH);
-}
-void hcYmzShield::_busAddress() {
-  digitalWrite(PIN_SEL, LOW);
-}
-void hcYmzShield::_busData() {
-  digitalWrite(PIN_SEL, HIGH);
-}
-void hcYmzShield::_psgWrite() {
-  digitalWrite(PIN_CS2, LOW);
-  digitalWrite(PIN_CS1, LOW);
-  digitalWrite(PIN_CS2, HIGH);
-  digitalWrite(PIN_CS1, HIGH);
-}
-void hcYmzShield::_psg0Write() {
-  digitalWrite(PIN_CS2, LOW);
-  digitalWrite(PIN_CS2, HIGH);
-}
-void hcYmzShield::_psg1Write() {
-  digitalWrite(PIN_CS1, LOW);
-  digitalWrite(PIN_CS1, HIGH);
-}
-void hcYmzShield::_debugLightOn() {
-  digitalWrite(13, HIGH);
-}
-void hcYmzShield::_debugLightOff() {
-  digitalWrite(13, LOW);
-}
+  #if YMZ_VERSION >= 200
+  inline void hcYmzShield::_shiftOut(uint8_t value) {
+    digitalWrite(YMZ_RCK, LOW);
+    SPDR = value;
+    while (!(SPSR & 0x80));
+    digitalWrite(YMZ_RCK, HIGH);
+    uint8_t c = SPDR;
+  }
+  #else
+  inline void hcYmzShield::_shiftOut(uint8_t value) {
+    digitalWrite(YMZ_RCK, LOW);
+    shiftOut(YMZ_SER, YMZ_SRCK, MSBFIRST, value);
+    digitalWrite(YMZ_RCK, HIGH);
+  }
+  #endif
+  inline void hcYmzShield::_busAddress() {
+    digitalWrite(YMZ_SEL, LOW);
+  }
+  inline void hcYmzShield::_busData() {
+    digitalWrite(YMZ_SEL, HIGH);
+  }
+  inline void hcYmzShield::_psg0Write() {
+    digitalWrite(YMZ_CS1, LOW);
+    digitalWrite(YMZ_CS1, HIGH);
+  }
+  inline void hcYmzShield::_psg1Write() {
+    digitalWrite(YMZ_CS2, LOW);
+    digitalWrite(YMZ_CS2, HIGH);
+  }
 #endif
 
 
@@ -205,33 +144,63 @@ void hcYmzShield::_debugLightOff() {
  * Initializes the shield as an object.
  */
 hcYmzShield::hcYmzShield() {
-  #if defined(__SPI_HACK)
-  DDRB  |= B00101111;
-  DDRD  |= B00001100;
-  PORTB &= ~B00101000;
-  PORTB |= B00000110;
-  PORTD |= B00001100;
-  SPCR |= B01010000;
-  SPSR |= B00000001;
-  #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega168A__) || defined(__AVR_ATmega168PA__)
-  DDRB  |= B00111100; // LED | MASK_CS1 | MASK_SEL | MASK_CS2
-  DDRD  |= B00011100; // MASK_SER | MASK_RCK | MASK_SRCK
-  PORTB |= B00010100; // MASK_CS1 | MASK_CS2
-  #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-  DDRB  |= B11110000; // LED | CS1 | SEL | CS2
-  DDRE  |= B00110000; // SER | RCK
-  DDRG  |= B00100000; // SRCK
-  PORTB |= B01010000; // CS1 | CS2
+  // AVR Boot Sequence
+  #ifndef YMZ_FALLBACK
+    #if YMZ_VERSION >= 200
+    YMZ_CS1_DIR   |=  YMZ_CS1;
+    YMZ_CS2_DIR   |=  YMZ_CS2;
+    YMZ_SEL_DIR   |=  YMZ_SEL;
+    YMZ_RCK_DIR   |=  YMZ_RCK;
+    YMZ_SS_DIR    |=  YMZ_SS;
+    YMZ_MOSI_DIR  |=  YMZ_MOSI;
+    YMZ_SCK_DIR   |=  YMZ_SCK;
+    YMZ_MOSI_PORT &= ~YMZ_MOSI;
+    YMZ_SCK_PORT  &= ~YMZ_SCK;
+    YMZ_SS_PORT   |=  YMZ_SS;
+    YMZ_RCK_PORT  |=  YMZ_RCK;
+    YMZ_CS1_PORT  |=  YMZ_CS1;
+    YMZ_CS2_PORT  |=  YMZ_CS2;
+    SPCR |= 0x50; // 01010000
+    SPSR |= 0x01; // 00000001
+    #else
+    YMZ_CS1_DIR  |= YMZ_CS1;
+    YMZ_CS2_DIR  |= YMZ_CS2;
+    YMZ_SEL_DIR  |= YMZ_SEL;
+    YMZ_RCK_DIR  |= YMZ_RCK;
+    YMZ_SER_DIR  |= YMZ_SER;
+    YMZ_SRCK_DIR |= YMZ_SRCK;
+    YMZ_CS1_PORT |= YMZ_CS1;
+    YMZ_CS2_PORT |= YMZ_CS2;
+    #endif
+  
+  // Arduino Boot Sequence
   #else
-  pinMode(PIN_SER,  OUTPUT);
-  pinMode(PIN_RCK,  OUTPUT);
-  pinMode(PIN_SRCK, OUTPUT);
-  pinMode(PIN_CS1,  OUTPUT);
-  pinMode(PIN_SEL,  OUTPUT);
-  pinMode(PIN_CS2,  OUTPUT);
-  pinMode(13,       OUTPUT); // LED
-  digitalWrite(PIN_CS1, HIGH);
-  digitalWrite(PIN_CS2, HIGH);
+    #if YMZ_VERSION >= 200
+    pinMode(YMZ_CS1,  OUTPUT);
+    pinMode(YMZ_CS2,  OUTPUT);
+    pinMode(YMZ_SEL,  OUTPUT);
+    pinMode(YMZ_RCK,  OUTPUT);
+    pinMode(YMZ_SS,  OUTPUT);
+    pinMode(YMZ_MOSI,  OUTPUT);
+    pinMode(YMZ_SCK,  OUTPUT);
+    digitalWrite(YMZ_MOSI, LOW);
+    digitalWrite(YMZ_SCK, LOW);
+    digitalWrite(YMZ_SS, HIGH);
+    digitalWrite(YMZ_RCK, HIGH);
+    digitalWrite(YMZ_CS1, HIGH);
+    digitalWrite(YMZ_CS2, HIGH);
+    SPCR |= 0x50; // 01010000
+    SPSR |= 0x01; // 00000001
+    #else
+    pinMode(YMZ_CS1,  OUTPUT);
+    pinMode(YMZ_CS2,  OUTPUT);
+    pinMode(YMZ_SEL,  OUTPUT);
+    pinMode(YMZ_RCK,  OUTPUT);
+    pinMode(YMZ_SER,  OUTPUT);
+    pinMode(YMZ_SRCK, OUTPUT);
+    digitalWrite(YMZ_CS1, HIGH);
+    digitalWrite(YMZ_CS2, HIGH);
+    #endif
   #endif
   
   // Initialize register backup to 0
@@ -256,23 +225,21 @@ hcYmzShield::hcYmzShield() {
  * Set a byte in both YMZ284s' internal registers.
  */
 void hcYmzShield::_setRegisterPsg(uint8_t reg, uint8_t data) {
-  _debugLightOn();
-
   // Switch the bus to recieve a register address and shift it out
   _busAddress();
   _shiftOut(reg);
-  _psgWrite();
+  _psg0Write();
+  _psg1Write();
   
   // Switch the bus to recieve data and shift it out
   _busData();
   _shiftOut(data);
-  _psgWrite();
+  _psg0Write();
+  _psg1Write();
   
   // Copy the byte to the internal register map
   _psg0Registers[reg] = data;
   _psg1Registers[reg] = data;
-
-  _debugLightOff();
 }
 
 
@@ -282,8 +249,27 @@ void hcYmzShield::_setRegisterPsg(uint8_t reg, uint8_t data) {
  * Set a byte in PSG0's internal registers.
  */
 void hcYmzShield::_setRegisterPsg0(uint8_t reg, uint8_t data) {
-  _debugLightOn();
+  // Switch the bus to recieve a register address and shift it out
+  _busAddress();
+  _shiftOut(reg);
+  _psg0Write();
+  
+  // Switch the bus to recieve data and shift it out
+  _busData();
+  _shiftOut(data);
+  _psg0Write();
+  
+  // Copy the byte to the internal register map
+  _psg0Registers[reg] = data;
+}
 
+
+/**
+ * private hcYmzShield::_setRegisterPsg1()
+ * 
+ * Set a byte in PSG1's internal registers.
+ */
+void hcYmzShield::_setRegisterPsg1(uint8_t reg, uint8_t data) {
   // Switch the bus to recieve a register address and shift it out
   _busAddress();
   _shiftOut(reg);
@@ -296,33 +282,6 @@ void hcYmzShield::_setRegisterPsg0(uint8_t reg, uint8_t data) {
   
   // Copy the byte to the internal register map
   _psg1Registers[reg] = data;
-
-  _debugLightOff();
-}
-
-
-/**
- * private hcYmzShield::_setRegisterPsg1()
- * 
- * Set a byte in PSG1's internal registers.
- */
-void hcYmzShield::_setRegisterPsg1(uint8_t reg, uint8_t data) {
-  _debugLightOn();
-
-  // Switch the bus to recieve a register address and shift it out
-  _busAddress();
-  _shiftOut(reg);  
-  _psg0Write();
-  
-  // Switch the bus to recieve data and shift it out
-  _busData();
-  _shiftOut(data);
-  _psg0Write();
-  
-  // Copy the byte to the internal register map
-  _psg0Registers[reg] = data;
-
-  _debugLightOff();
 }
 
 
@@ -333,7 +292,7 @@ void hcYmzShield::_setRegisterPsg1(uint8_t reg, uint8_t data) {
  * Hz = (4 * 10^6) / (32 * TP)
  */
 void hcYmzShield::setTonePeriod(uint8_t channel, uint16_t tp) {
-  tp &= 0x0fff; // Sanitize
+  tp &= YMZ_MASK_TFREQ; // Sanitize
   
   if(channel > 2) {
     _setRegisterPsg1(((channel -= 3) *= 2), tp & 0xff);
@@ -374,6 +333,7 @@ uint16_t hcYmzShield::getTonePeriod(uint8_t channel) {
  */
 void hcYmzShield::setToneFrequency(uint8_t channel, float hz) {
   uint16_t tp = 125000 / hz;
+  tp &= YMZ_MASK_TFREQ;
   
   if(channel > 2) {
     _setRegisterPsg1(((channel -= 3) *= 2), tp & 0xff);
@@ -392,10 +352,10 @@ void hcYmzShield::setToneFrequency(uint8_t channel, float hz) {
  * Sets the tone period of a channel to produce the given MIDI note.
  */
 void hcYmzShield::setToneMidi(uint8_t channel, uint16_t note) {
-  #ifdef __FAVOR_PRECISION
-  uint16_t tp = tpMidi[note];
+  #ifdef YMZ_PRECISION
+    uint16_t tp = tpMidi[note];
   #else
-  uint16_t tp = ((note > 12) ? (tpMidi[note%12] >> (note/12)) : tpMidi[note]);
+    uint16_t tp = ((note > 12) ? (tpMidi[note%12] >> (note/12)) : tpMidi[note]);
   #endif
   
   if(channel > 2) {
@@ -418,7 +378,7 @@ void hcYmzShield::setToneMidi(uint8_t channel, uint16_t note) {
  * Hz = (4 * 10^6) / (32 * NP)
  */
 void hcYmzShield::setNoisePeriod(uint8_t np) {
-  _setRegisterPsg(0x06, np & B00011111); // Sanitize and write
+  _setRegisterPsg(0x06, np & YMZ_MASK_NFREQ); // Sanitize and write
 }
 
 
@@ -439,8 +399,9 @@ uint8_t hcYmzShield::getNoisePeriod() {
  */
 void hcYmzShield::setNoiseFrequency(float hz) {
   uint16_t np = 125000 / hz;
+  np &= YMZ_MASK_NFREQ;
   
-  _setRegisterPsg(0x06, np & B00011111); // Sanitize and write
+  _setRegisterPsg(0x06, np); // Sanitize and write
 }
 
 
@@ -488,7 +449,7 @@ void hcYmzShield::setEnvelopeFrequency(float hz) {
  * register are used. The bits toggle CONTINUE, ATTACK, ALTERNATE and HOLD.
  */
 void hcYmzShield::startEnvelope(uint8_t shape) {
-  _setRegisterPsg(0x0d, shape & 0xf); // Sanitize
+  _setRegisterPsg(0x0d, shape & YMZ_MASK_ADSR); // Sanitize
 }
 
 
@@ -509,9 +470,9 @@ void hcYmzShield::restartEnvelope() {
  */
 void hcYmzShield::setTone(uint8_t channel, bool isEnabled) {
   if(channel > 2)
-    _setRegisterPsg1(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << (channel - 3)) : _psg1Registers[0x07] | (1 << (channel - 3))) & 0x3f);
+    _setRegisterPsg1(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << (channel - 3)) : _psg1Registers[0x07] | (1 << (channel - 3))) & YMZ_MASK_MIXER);
   else
-    _setRegisterPsg0(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << channel) : _psg1Registers[0x07] | (1 << channel)) & 0x3f);
+    _setRegisterPsg0(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << channel) : _psg1Registers[0x07] | (1 << channel)) & YMZ_MASK_MIXER);
 }
 
 
@@ -535,9 +496,9 @@ bool hcYmzShield::isTone(uint8_t channel) {
  */
 void hcYmzShield::setNoise(uint8_t channel, bool isEnabled) {
   if(channel > 2)
-    _setRegisterPsg1(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << channel) : _psg1Registers[0x07] | (1 << channel)) & 0x3f);
+    _setRegisterPsg1(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << channel) : _psg1Registers[0x07] | (1 << channel)) & YMZ_MASK_MIXER);
   else
-    _setRegisterPsg0(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << (channel + 3)) : _psg1Registers[0x07] | (1 << (channel + 3))) & 0x3f);
+    _setRegisterPsg0(0x07, (isEnabled ? _psg1Registers[0x07] & ~(1 << (channel + 3)) : _psg1Registers[0x07] | (1 << (channel + 3))) & YMZ_MASK_MIXER);
 }
 
 
@@ -560,8 +521,8 @@ bool hcYmzShield::isNoise(uint8_t channel) {
  * Toggle sound channels off.
  */
 void hcYmzShield::mute() {
-  _tone = B00111111;
-  _setRegisterPsg(0x07, B00111111);
+  _tone = YMZ_MASK_MIXER;
+  _setRegisterPsg(0x07, YMZ_MASK_MIXER);
 }
 
 
@@ -571,14 +532,14 @@ void hcYmzShield::mute() {
  * Adjust the value of each channel.
  */
 void hcYmzShield::setVolume(uint8_t channel, uint8_t volume, bool fakeMute) {
-  volume &= 0xf; // Sanitize
+  volume &= YMZ_MASK_VOLUME; // Sanitize
   if(!fakeMute)
     _volume[channel] = volume;
   
   if(channel > 2)
-    _setRegisterPsg1(0x08 + (channel - 3), volume + (_psg1Registers[0x08] & 0x10));
+    _setRegisterPsg1(0x08 + (channel - 3), volume + (_psg1Registers[0x08] & YMZ_MASK_ENVEL));
   else
-    _setRegisterPsg0(0x08 + channel, volume + (_psg0Registers[0x08] & 0x10));
+    _setRegisterPsg0(0x08 + channel, volume + (_psg0Registers[0x08] & YMZ_MASK_ENVEL));
 }
 
 
@@ -587,7 +548,7 @@ void hcYmzShield::setVolume(uint8_t channel, uint8_t volume, bool fakeMute) {
  * 
  * Returns the volume of a channel.
  */
-byte hcYmzShield::getVolume(uint8_t channel) {
+uint8_t hcYmzShield::getVolume(uint8_t channel) {
   if(channel > 2)
     return(_psg1Registers[0x08 + (channel - 3)]);
   else
@@ -614,12 +575,12 @@ void hcYmzShield::setVolume(uint8_t volume) {
 void hcYmzShield::setEnvelope(uint8_t channel, bool isEnabled) {
   uint8_t data;
   if(channel > 2) {
-    data = (isEnabled ? _psg1Registers[0x08] | 0x10 : _psg1Registers[0x08] & ~0x10);
-    _setRegisterPsg1(0x08, data & 0x1f);
+    data = (isEnabled ? _psg1Registers[0x08] | YMZ_MASK_ENVEL : _psg1Registers[0x08] & ~YMZ_MASK_ENVEL);
+    _setRegisterPsg1(0x08, data & YMZ_MASK_LEVEL);
   }
   else {
-    data = (isEnabled ? _psg0Registers[0x08] | 0x10 : _psg0Registers[0x08] & ~0x10);
-    _setRegisterPsg0(0x08, data & 0x1f);  
+    data = (isEnabled ? _psg0Registers[0x08] | YMZ_MASK_ENVEL : _psg0Registers[0x08] & ~YMZ_MASK_ENVEL);
+    _setRegisterPsg0(0x08, data & YMZ_MASK_LEVEL);  
   }
 }
 
@@ -631,9 +592,9 @@ void hcYmzShield::setEnvelope(uint8_t channel, bool isEnabled) {
  */
 bool hcYmzShield::isEnvelope(uint8_t channel) {  
   if(channel > 2)
-    return(((_psg1Registers[0x08] & 0x10) == 1) ? true : false);
+    return(((_psg1Registers[0x08] & YMZ_MASK_ENVEL) == 1) ? true : false);
   else
-    return(((_psg0Registers[0x08] & 0x10) == 1) ? true : false);
+    return(((_psg0Registers[0x08] & YMZ_MASK_ENVEL) == 1) ? true : false);
 }
 
 
@@ -657,12 +618,12 @@ void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, ui
       _tone |= (1 << i);
       setVolume(i, 0, true);
     }
-    else if(channel[i] < 128)
+    else if(channel[i] < SKIP)
       _tone &= ~(1 << i);
   }
   
-  _setRegisterPsg0(0x07, (_psg0Registers[0x07] & ~B00000111) | (state & B00000111));
-  _setRegisterPsg1(0x07, (_psg1Registers[0x07] & ~B00000111) | (state >> 3));
+  _setRegisterPsg0(0x07, (_psg0Registers[0x07] & ~YMZ_MASK_CHAN) | (state & YMZ_MASK_CHAN));
+  _setRegisterPsg1(0x07, (_psg1Registers[0x07] & ~YMZ_MASK_CHAN) | (state >> 3));
   
   // Pause for articulation
   delay(_articulation);
@@ -675,8 +636,8 @@ void hcYmzShield::setChannels(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3, ui
     }
   }
   
-  _setRegisterPsg0(0x07, (_psg0Registers[0x07] & ~B00000111) | (_tone & B00000111));
-  _setRegisterPsg1(0x07, (_psg1Registers[0x07] & ~B00000111) | (_tone >> 3));
+  _setRegisterPsg0(0x07, (_psg0Registers[0x07] & ~YMZ_MASK_CHAN) | (_tone & YMZ_MASK_CHAN));
+  _setRegisterPsg1(0x07, (_psg1Registers[0x07] & ~YMZ_MASK_CHAN) | (_tone >> 3));
 
 }
 
@@ -772,7 +733,7 @@ void hcYmzShield::beat(uint8_t beat, uint8_t dot) {
 void hcYmzShield::playBlock(const uint8_t *song) {
   uint32_t i;
   uint8_t command;
-  if(pgm_read_byte(song) == 0x48 && pgm_read_byte(song + 1) == 0x43) {
+  if((pgm_read_byte(song) << 8) + pgm_read_byte(song + 1) == YMZ_MAGIC) {
     if(song[2] < 2) { // Support <= Revision 1
       command = pgm_read_byte(song + 3);
       i = 4;
